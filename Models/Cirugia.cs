@@ -11,7 +11,7 @@
         public Guid VeterinarioId { get; set; }
         public Veterinario? Veterinario { get; set; }
 
-        public int HistorialMedicoId { get; set; }
+        public Guid HistorialMedicoId { get; set; }
         public HistorialMedico? HistorialMedico { get; set; }
     }
 }

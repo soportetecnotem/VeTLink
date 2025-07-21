@@ -9,6 +9,6 @@
         public HistorialMedico? HistorialMedico { get; set; }
 
         public int EnfermedadId { get; set; }
-        public HistorialEnfermedad? Enfermedad { get; set; }
+        public Enfermedad? Enfermedad { get; set; }
     }
 }

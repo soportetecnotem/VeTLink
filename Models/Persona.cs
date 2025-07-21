@@ -11,7 +11,13 @@
         public int? Edad { get; set; }
         public int? NumeroIdentificacion { get; set; }
 
-        public Guid? UsuarioId { get; set; }
-        public Usuario? Usuario { get; set; } = null!;
+        //public Guid? UsuarioId { get; set; }
+        //public Usuario? Usuario { get; set; } = null!;
+
+        public TipoUsuario? TipoUsuario { get; set; }
+        public int? TipoUsuarioId { get; set; }
+
+        public int? DireccionId { get; set; }
+        public Direccion? Direccion { get; set; }
     }
 }

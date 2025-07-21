@@ -4,9 +4,9 @@ using VeTLink.Models;
 
 namespace VeTLink.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<Usuario>
+    public class ApplicationDbContext : IdentityDbContext//<Usuario>
     {
-        public ApplicationDbContext(DbContextOptions options) : base(options)
+        public ApplicationDbContext (DbContextOptions options) : base(options)
         {
         }
 
@@ -50,7 +50,9 @@ namespace VeTLink.Data
         public DbSet<TipoUsuario> TiposUsuarios { get; set; }
         public DbSet<Tratamiento> Tratamientos { get; set; }
         public DbSet<UnidadTiempo> UnidadesTiempo { get; set; }
-        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Vacuna> Vacunas { get; set; }
+        public DbSet<Veterinario> Veterinarios { get; set; }
+        public DbSet<ViaAdministracion> ViasAdministracion { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

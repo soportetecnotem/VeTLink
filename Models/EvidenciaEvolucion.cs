@@ -7,7 +7,7 @@
         public string? URLArchivo { get; set; }
         public string? Descripcion { get; set; }
 
-        public Guid UsuarioId { get; set; }
-        public Usuario? Usuario { get; set; }
+        public Guid PersonaId { get; set; }
+        public Persona? Persona { get; set; }
     }
 }

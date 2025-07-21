@@ -8,9 +8,6 @@
         public string? DiagnosticoDefinitivo { get; set; }
         public string? Observaciones { get; set; }
 
-        public Guid ConsultaMedicaId { get; set; }
-        public ConsultaMedica? ConsultaMedica { get; set; }
-
         public  ICollection<PruebaLaboratorio> Pruebas { get; set; } = new List<PruebaLaboratorio>();
 
     }

@@ -3,7 +3,6 @@
     public class SintomaActual
     {
         public Guid Id { get; set; }
-        public Guid ConsultaId { get; set; }
         public DateTime Fecha { get; set; }
         public string? DescripcionSintomas { get; set; }
         public string? Observaciones { get; set; }

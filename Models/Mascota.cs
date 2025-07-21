@@ -15,7 +15,7 @@
         public Guid? DuenoId { get; set; }
         public Dueno? Dueno { get; set; }
 
-        public int CarnetId { get; set; }
+        public Guid CarnetId { get; set; }
         public CarnetPreventivo? Carnet { get; set; }
 
         public ICollection<ConsultaMedica> Consultas { get; set; } = new List<ConsultaMedica>();

@@ -1,10 +1,13 @@
-﻿namespace VeTLink.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace VeTLink.Models
 {
     public class ConsultaMedica
     {
         public Guid Id { get; set; }
         public DateTime FechaConsulta { get; set; }
-        public DateTime? InicioSintomas { get; set; }        
+        public DateTime? InicioSintomas { get; set; }
+        [Precision(18, 2)] // precisión total de 18 dígitos, 2 decimales
         public decimal? Costo { get; set; }
         public string? MotivoConsulta { get; set; }        
         public string? Observaciones { get; set; }
@@ -16,7 +19,7 @@
         public  Mascota? Mascota { get; set; }
 
         public Guid VeterinarioId { get; set; }
-        public  Usuario? Veterinario { get; set; }
+        public  Veterinario? Veterinario { get; set; }
 
         public int TipoServicioId { get; set; }
         public TipoServicio? TipoServicio { get; set; }
