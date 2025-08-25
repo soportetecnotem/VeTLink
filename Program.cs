@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 using VeTLink.Data;
 using VeTLink.Models;
 
@@ -17,42 +20,42 @@ builder.Services.AddCors(opciones =>
     });
 });
 
-//builder.Services.AddAutoMapper(typeof(Program));
+//AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
 
-builder.Services.AddControllers().AddNewtonsoftJson();
+//Configuración de EF + Identity
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
-opciones.UseSqlServer("name=DefaultConnection"));
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
-////Codigo para usuarios con identity
-//builder.Services.AddIdentityCore<Usuario>()
-//    .AddRoles<IdentityRole>()
-//    .AddEntityFrameworkStores<ApplicationDbContext>()
-//    .AddDefaultTokenProviders();
+//Configuración de JWT
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
 
-//builder.Services.AddScoped<UserManager<Usuario>>();
-//builder.Services.AddScoped<SignInManager<Usuario>>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!))
+    };
+});
 
-builder.Services.AddHttpContextAccessor();
-
-//builder.Services.AddAuthentication().AddJwtBearer(opciones =>
-//{
-//    opciones.MapInboundClaims = false;
-
-//    opciones.TokenValidationParameters = new TokenValidationParameters
-//    {
-//        ValidateIssuer = false,
-//        ValidateAudience = false,
-//        ValidateLifetime = true,
-//        ValidateIssuerSigningKey = true,
-//        IssuerSigningKey =
-//        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["LlaveJWT"]!)),
-//        ClockSkew = TimeSpan.Zero
-//    };
-//});
-
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("Admin", politica => politica.RequireClaim("Admin"));
+builder.Services.AddControllers();
 
 builder.Services.AddSwaggerGen(opciones =>
 {
@@ -75,6 +78,7 @@ builder.Services.AddSwaggerGen(opciones =>
 
 });
 
+
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
@@ -93,7 +97,6 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         return new BadRequestObjectResult(customResponse);
     };
 });
-
 
 var app = builder.Build();
 

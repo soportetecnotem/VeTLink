@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using VeTLink.Models;
 
 namespace VeTLink.Data
 {
-    public class ApplicationDbContext : IdentityDbContext//<Usuario>
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext (DbContextOptions options) : base(options)
         {

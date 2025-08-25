@@ -10,5 +10,7 @@
         public HistorialReproductivo? HistorialReproductivo { get; set; }
 
         public ICollection<HistorialEnfermedad> Enfermedades { get; set; } = new List<HistorialEnfermedad>();
+        
+        public ICollection<Alergia> Alergias { get; set; } = new List<Alergia>();
     }
 }

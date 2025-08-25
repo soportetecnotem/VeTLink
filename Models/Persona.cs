@@ -1,4 +1,6 @@
-﻿namespace VeTLink.Models
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace VeTLink.Models
 {
     public class Persona
     {
@@ -10,9 +12,10 @@
         public DateTime? FechaNacimiento { get; set; }
         public int? Edad { get; set; }
         public int? NumeroIdentificacion { get; set; }
+        public string? Imagen { get; set; }
 
-        //public Guid? UsuarioId { get; set; }
-        //public Usuario? Usuario { get; set; } = null!;
+        public string UsuarioId { get; set; } = null!;
+        public IdentityUser Usuario { get; set; } = null!;
 
         public TipoUsuario? TipoUsuario { get; set; }
         public int? TipoUsuarioId { get; set; }

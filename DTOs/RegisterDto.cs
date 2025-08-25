@@ -1,0 +1,13 @@
+﻿namespace VeTLink.DTOs
+{
+    public class RegisterDto
+    {
+        public string Email { get; set; } = null!;
+        public string Password { get; set; } = null!;
+        public string Nombre { get; set; } = null!;
+        public string PrimerApellido { get; set; } = null!;
+        public string? SegundoApellido { get; set; }
+        public string? Genero { get; set; }
+        public DateTime? FechaNacimiento { get; set; }
+    }
+}
