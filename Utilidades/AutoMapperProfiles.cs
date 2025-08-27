@@ -20,10 +20,15 @@ namespace VeTLink.Utilidades
             // RegisterDto Persona
             CreateMap<RegisterDto, Persona>();
 
-        // RegisterDto IdentityUser
-        CreateMap<RegisterDto, IdentityUser>()
+            // RegisterDto IdentityUser
+            CreateMap<RegisterDto, IdentityUser>()
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+
+            //Catalogos
+            CreateMap<CondicionCorporal, CatalogoDTO>().ReverseMap();
+            CreateMap<CondicionCorporal, DetalleCatalogoDTO>().ReverseMap();
+
         }
     }
 }
