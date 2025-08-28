@@ -29,6 +29,9 @@ namespace VeTLink.Utilidades
             CreateMap<CondicionCorporal, CatalogoDTO>().ReverseMap();
             CreateMap<CondicionCorporal, DetalleCatalogoDTO>().ReverseMap();
 
+            CreateMap<EstadoGeneral, CatalogoDTO>().ReverseMap();
+            CreateMap<EstadoGeneral, DetalleCatalogoDTO>().ReverseMap();
+
         }
     }
 }
