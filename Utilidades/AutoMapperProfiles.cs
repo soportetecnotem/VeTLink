@@ -32,6 +32,32 @@ namespace VeTLink.Utilidades
             CreateMap<EstadoGeneral, CatalogoDTO>().ReverseMap();
             CreateMap<EstadoGeneral, DetalleCatalogoDTO>().ReverseMap();
 
+            CreateMap<Mucosa, CatalogoDTO>().ReverseMap();
+            CreateMap<Mucosa, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<Hidratacion, CatalogoDTO>().ReverseMap();
+            CreateMap<Hidratacion, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<Comportamiento, CatalogoDTO>().ReverseMap();
+            CreateMap<Comportamiento, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<TipoPrueba, CatalogoDTO>().ReverseMap();
+            CreateMap<TipoPrueba, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<ViaAdministracion, CatalogoDTO>().ReverseMap();
+            CreateMap<ViaAdministracion, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<TipoTratamiento, CatalogoDTO>().ReverseMap();
+            CreateMap<TipoTratamiento, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<NivelActividad, CatalogoDTO>().ReverseMap();
+            CreateMap<NivelActividad, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<ReaccionSocial, CatalogoDTO>().ReverseMap();
+            CreateMap<ReaccionSocial, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<TipoServicio, CatalogoDTO>().ReverseMap();
+            CreateMap<TipoServicio, DetalleCatalogoDTO>().ReverseMap();
         }
     }
 }
