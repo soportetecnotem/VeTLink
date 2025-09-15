@@ -22,6 +22,7 @@
         public int? TipoUsuarioId { get; set; }
 
         // Veterinario
+        public bool EsVeterinario { get; set; }
         public string? CedulaProfesional { get; set; }
         public string? Horarios { get; set; }
     }

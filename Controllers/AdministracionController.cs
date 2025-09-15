@@ -55,29 +55,58 @@ namespace VeTLink.Controllers
                 persona.Usuario = usuario;
                 persona.TipoUsuarioId =  1 ; // 1 = Veterinario
 
+                // Calcular edad si la fecha de nacimiento es válida
+                if (dto.FechaNacimiento.HasValue && dto.FechaNacimiento.Value != default)
+                {
+                    var today = DateTime.Today;
+                    var edad = today.Year - dto.FechaNacimiento.Value.Year;
+
+                    // Ajustar si aún no ha cumplido años este año
+                    if (dto.FechaNacimiento.Value.Date > today.AddYears(-edad))
+                    {
+                        edad--;
+                    }
+
+                    persona.Edad = edad >= 0 ? edad : null; // si resultara negativo, lo dejamos nulo
+                }
+                else
+                {
+                    persona.Edad = null; // no asignamos nada si la fecha no es válida
+                }
+
                 _context.Personas.Add(persona);
                 await _context.SaveChangesAsync();
 
                 // 4. Veterinario (admin inicial)
-                var veterinario = _mapper.Map<Veterinario>(dto);
-                veterinario.Persona = persona;
-                veterinario.ClinicasAsignadas.Add(clinica);
-
-                _context.Veterinarios.Add(veterinario);
-                await _context.SaveChangesAsync();
-
-                // 5. Verificar si es el primer veterinario de la clínica
-                var totalVeterinariosEnClinica = _context.Veterinarios
-                    .Where(v => v.ClinicasAsignadas.Any(c => c.Id == clinica.Id))
-                    .Count();
-
-                if (totalVeterinariosEnClinica == 1) // 👈 es el primer veterinario
+                if (dto.EsVeterinario)
                 {
-                    // Aseguramos que exista el rol "AdminClinica"
-                    if (!await _roleManager.RoleExistsAsync("AdminClinica"))
+                    var veterinario = _mapper.Map<Veterinario>(dto);
+                    veterinario.Persona = persona;
+                    veterinario.ClinicasAsignadas.Add(clinica);
+
+                    _context.Veterinarios.Add(veterinario);
+
+                    // 5. Verificar si es el primer veterinario de la clínica
+                    var totalVeterinariosEnClinica = _context.Veterinarios
+                        .Where(v => v.ClinicasAsignadas.Any(c => c.Id == clinica.Id))
+                        .Count();
+
+                    if (totalVeterinariosEnClinica == 1) // es el primer veterinario
                     {
-                        await _roleManager.CreateAsync(new IdentityRole("AdminClinica"));
+                        // Aseguramos que exista el rol "AdminClinica"
+                        if (!await _roleManager.RoleExistsAsync("AdminClinica"))
+                        {
+                            await _roleManager.CreateAsync(new IdentityRole("AdminClinica"));
+                        }
                     }
+                else
+                {
+                    // Solo persona (no veterinario)
+                    await _userManager.AddToRoleAsync(usuario, "AdminClinica");
+                }
+
+                await _context.SaveChangesAsync();
+                              
 
                     // Asignamos el rol al usuario de la persona asociada
                     var usuarioV = await _userManager.FindByIdAsync(persona.UsuarioId);
