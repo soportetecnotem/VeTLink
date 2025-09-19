@@ -21,7 +21,7 @@ namespace VeTLink.Controllers
         private readonly IMapper _mapper = mapper;
 
         [HttpPost("registrar")]
-        [EndpointSummary("Registra una clínica con su primer veterinario administrador")]
+        [EndpointSummary("Registra una clínica con su primer administrador de cinica")]
         public async Task<ActionResult<RespuestaObjetoDTO>> RegistrarClinica([FromBody] RegistroClinicaDTO dto)
         {
             var respuesta = new RespuestaObjetoDTO();
@@ -99,14 +99,9 @@ namespace VeTLink.Controllers
                             await _roleManager.CreateAsync(new IdentityRole("AdminClinica"));
                         }
                     }
-                else
-                {
-                    // Solo persona (no veterinario)
-                    await _userManager.AddToRoleAsync(usuario, "AdminClinica");
-                }
 
-                await _context.SaveChangesAsync();
-                              
+                    await _context.SaveChangesAsync();
+
 
                     // Asignamos el rol al usuario de la persona asociada
                     var usuarioV = await _userManager.FindByIdAsync(persona.UsuarioId);
@@ -114,20 +109,48 @@ namespace VeTLink.Controllers
                     {
                         await _userManager.AddToRoleAsync(usuarioV, "AdminClinica");
                     }
+
+
+                    await transaction.CommitAsync();
+
+                    respuesta.Status = true;
+                    respuesta.Response = new
+                    {
+                        Clinica = _mapper.Map<ClinicaDTO>(clinica),
+                        Veterinario = _mapper.Map<VeterinarioDTO>(veterinario)
+                    };
+                    respuesta.Message = new() { "Clínica y veterinario administrador registrados correctamente." };
+
+                    return Ok(respuesta);
                 }
-
-                await transaction.CommitAsync();
-
-                respuesta.Status = true;
-                respuesta.Response = new
+                else
                 {
-                    Clinica = _mapper.Map<ClinicaDTO>(clinica),
-                    Veterinario = _mapper.Map<VeterinarioDTO>(veterinario)
-                };
-                respuesta.Message = new() { "Clínica y veterinario administrador registrados correctamente." };
+                    // Solo persona (no veterinario)
+                    await _userManager.AddToRoleAsync(usuario, "AdminClinica");
 
-                return Ok(respuesta);
-            }
+                    await _context.SaveChangesAsync();
+
+
+                    // Asignamos el rol al usuario de la persona asociada
+                    var usuarioV = await _userManager.FindByIdAsync(persona.UsuarioId);
+                    if (usuarioV != null)
+                    {
+                        await _userManager.AddToRoleAsync(usuarioV, "AdminClinica");
+                    }
+
+                    await transaction.CommitAsync();
+
+                    respuesta.Status = true;
+                    respuesta.Response = new
+                    {
+                        Clinica = _mapper.Map<ClinicaDTO>(clinica),
+                        Persona = _mapper.Map<PersonaDTO>(persona)
+                    };
+                    respuesta.Message = new() { "Clínica y administrador registrados correctamente." };
+
+                    return Ok(respuesta);
+                }                
+            }               
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();

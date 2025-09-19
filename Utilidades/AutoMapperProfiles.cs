@@ -92,7 +92,8 @@ namespace VeTLink.Utilidades
                 .ForMember(dto => dto.Direccion, config => config.MapFrom(ent => ent.Direccion))
                 .ForMember(dto => dto.Email, config => config.MapFrom(ent => ent.EmailClinica));
             
-            CreateMap<Clinica, ClinicaDTO>();
+            CreateMap<Clinica, ClinicaDTO>().ReverseMap();
+            CreateMap<Clinica, DetalleClinicaDTO>().ReverseMap();
 
             // Primer registro de la clinica con su admin clinica
             CreateMap<RegistroClinicaDTO, Persona>()
@@ -110,7 +111,7 @@ namespace VeTLink.Utilidades
                 .ForMember(dest => dest.Persona, opt => opt.Ignore())
                 .ForMember(dest => dest.ClinicasAsignadas, opt => opt.Ignore());
 
-            CreateMap<Veterinario, VeterinarioDTO>();
+            CreateMap<Veterinario, VeterinarioDTO>().ReverseMap();
         }
     }
 }
