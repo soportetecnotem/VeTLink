@@ -26,6 +26,7 @@ namespace VeTLink.Data
         public DbSet<Dueno> Duenos { get; set; }
         public DbSet<Enfermedad> Enfermedades { get; set; }
         public DbSet<EstadoGeneral> EstadosGeneral { get; set; }
+        public DbSet<EstadoSuscripcion> EstadosSuscripcion { get; set; }
         public DbSet<EventoCalendario> EventosCalendario { get; set; }
         public DbSet<EvidenciaEvolucion> EvidenciasEvolucion { get; set; }
         public DbSet<EvolucionClinica> EvolucionesClinicas { get; set; }
@@ -37,13 +38,16 @@ namespace VeTLink.Data
         public DbSet<Mascota> Mascotas { get; set; }
         public DbSet<Medicamento> Medicamentos { get; set; }
         public DbSet<Mucosa> Mucosas { get; set; }
+        public DbSet<Modulo> Modulos { get; set; }
         public DbSet<NivelActividad> NivelActividades { get; set; }
         public DbSet<Persona> Personas { get; set; }
+        public DbSet<Plan> Planes { get; set; }
         public DbSet<Profilaxis> LimpiezaProfilaxis { get; set; }
         public DbSet<PruebaLaboratorio> PruebasLaboratorios { get; set; }
         public DbSet<ReaccionSocial> ReaccionesSociales { get; set; }
         public DbSet<Receta> Recetas { get; set; }
         public DbSet<SintomaActual> SintomasActuales { get; set; }
+        public DbSet<Suscripcion> Suscripciones { get; set; }
         public DbSet<TipoCirugia> TiposCirugias { get; set; }
         public DbSet<TipoPrueba> TiposPruebas { get; set; }
         public DbSet<TipoServicio> TiposServicios { get; set; }

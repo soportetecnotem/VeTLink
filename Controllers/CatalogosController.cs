@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 using VeTLink.Data;
 using VeTLink.DTOs;
 using VeTLink.DTOs.Responses;
@@ -49,7 +50,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("CondicionCorporal/{id:int}")]
+        [HttpGet("CondicionCorporal/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de una condición corporal por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetCondicionCorporal(int id)
         {
@@ -85,7 +86,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("CondicionCorporal/{id:int}")]
+        [HttpPut("CondicionCorporal/Editar{id:int}")]
         [EndpointSummary("Edita una condición corporal existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarCondicionCorporal(int id, CatalogoDTO dto)
         {
@@ -108,7 +109,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("CondicionCorporal/{id:int}")]
+        [HttpDelete("CondicionCorporal/Eliminar/{id:int}")]
         [EndpointSummary("Elimina una condición corporal.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarCondicionCorporal(int id)
         {
@@ -176,7 +177,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("EstadoGral/{id:int}")]
+        [HttpGet("EstadoGral/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de un estado general por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetEstadoGral(int id)
         {
@@ -212,7 +213,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("EstadoGral/{id:int}")]
+        [HttpPut("EstadoGral/Editar/{id:int}")]
         [EndpointSummary("Edita un estado general existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarEstadoGral(int id, CatalogoDTO dto)
         {
@@ -235,7 +236,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("EstadoGral/{id:int}")]
+        [HttpDelete("EstadoGral/Eliminar/{id:int}")]
         [EndpointSummary("Elimina un estado general.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarEstadoGral(int id)
         {
@@ -303,7 +304,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("Mucosas/{id:int}")]
+        [HttpGet("Mucosas/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de una mucosa por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetMucosas(int id)
         {
@@ -339,7 +340,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("Mucosas/{id:int}")]
+        [HttpPut("Mucosas/Editar/{id:int}")]
         [EndpointSummary("Edita una mucosa existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarMucosas(int id, CatalogoDTO dto)
         {
@@ -362,7 +363,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("Mucosas/{id:int}")]
+        [HttpDelete("Mucosas/Eliminar/{id:int}")]
         [EndpointSummary("Elimina una mucosa por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarMucosas(int id)
         {
@@ -430,7 +431,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("Hidratacion/{id:int}")]
+        [HttpGet("Hidratacion/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de una Hidratacion por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetHidratacion(int id)
         {
@@ -466,7 +467,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("Hidratacion/{id:int}")]
+        [HttpPut("Hidratacion/Editar/{id:int}")]
         [EndpointSummary("Edita una Hidratacion existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarHidratacion(int id, CatalogoDTO dto)
         {
@@ -489,7 +490,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("Hidratacion/{id:int}")]
+        [HttpDelete("Hidratacion/Eliminar/{id:int}")]
         [EndpointSummary("Elimina una Hidratacion por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarHidratacion(int id)
         {
@@ -558,7 +559,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("UnidadTiempo/{id:int}")]
+        [HttpGet("UnidadTiempo/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de una unidad de Tiempo por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetUnidadTiempo(int id)
         {
@@ -594,7 +595,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("UnidadTiempo/{id:int}")]
+        [HttpPut("UnidadTiempo/Editar/{id:int}")]
         [EndpointSummary("Edita una Unidad de Tiempo existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarUnidadTiempo(int id, CatalogoDTO dto)
         {
@@ -617,7 +618,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("UnidadTiempo/{id:int}")]
+        [HttpDelete("UnidadTiempo/Eliminar/{id:int}")]
         [EndpointSummary("Elimina una Unidad de Tiempo por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarUnidadTiempo(int id)
         {
@@ -686,7 +687,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("Comportamiento/{id:int}")]
+        [HttpGet("Comportamiento/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de un comportamiento por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetComportamientoo(int id)
         {
@@ -722,7 +723,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("Comportamiento/{id:int}")]
+        [HttpPut("Comportamiento/Editar/{id:int}")]
         [EndpointSummary("Edita un comportamiento existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarComportamiento(int id, CatalogoDTO dto)
         {
@@ -745,7 +746,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("Comportamiento/{id:int}")]
+        [HttpDelete("Comportamiento/Eliminar/{id:int}")]
         [EndpointSummary("Elimina un comportamiento por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarComportamiento(int id)
         {
@@ -814,7 +815,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("TipoPrueba/{id:int}")]
+        [HttpGet("TipoPrueba/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de un tipo de Prueba por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetTipoPrueba(int id)
         {
@@ -850,7 +851,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("TipoPrueba/{id:int}")]
+        [HttpPut("TipoPrueba/Editar/{id:int}")]
         [EndpointSummary("Edita un tipo de Prueba existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarTipoPrueba(int id, CatalogoDTO dto)
         {
@@ -873,7 +874,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("TipoPrueba/{id:int}")]
+        [HttpDelete("TipoPrueba/Eliminar/{id:int}")]
         [EndpointSummary("Elimina un tipo de Prueba por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarTipoPrueba(int id)
         {
@@ -942,7 +943,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("ViaAdministracion/{id:int}")]
+        [HttpGet("ViaAdministracion/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de una via de Administracion por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetViaAdministracion(int id)
         {
@@ -978,7 +979,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("ViaAdministracion/{id:int}")]
+        [HttpPut("ViaAdministracion/Editar/{id:int}")]
         [EndpointSummary("Edita un tipo de una via de Administracion existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarViaAdministracion(int id, CatalogoDTO dto)
         {
@@ -1001,7 +1002,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("ViaAdministracion/{id:int}")]
+        [HttpDelete("ViaAdministracion/Eliminar/{id:int}")]
         [EndpointSummary("Elimina una via de Administracion por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarViaAdministracion(int id)
         {
@@ -1070,7 +1071,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("TipoTratamiento/{id:int}")]
+        [HttpGet("TipoTratamiento/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de un tipo de Tratamiento por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetTipoTratamiento(int id)
         {
@@ -1106,7 +1107,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("TipoTratamiento/{id:int}")]
+        [HttpPut("TipoTratamiento/Editar/{id:int}")]
         [EndpointSummary("Edita un tipo de Tratamiento existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarTipoTratamiento(int id, CatalogoDTO dto)
         {
@@ -1129,7 +1130,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("TipoTratamiento/{id:int}")]
+        [HttpDelete("TipoTratamiento/Eliminar/{id:int}")]
         [EndpointSummary("Elimina un tipo de Tratamiento por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarTipoTratamiento(int id)
         {
@@ -1198,7 +1199,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("NivelActividad/{id:int}")]
+        [HttpGet("NivelActividad/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de un nivel de Actividad por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetNivelActividad(int id)
         {
@@ -1234,7 +1235,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("NivelActividad/{id:int}")]
+        [HttpPut("NivelActividad/Editar/{id:int}")]
         [EndpointSummary("Edita un nivel de Actividad existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarNivelActividad(int id, CatalogoDTO dto)
         {
@@ -1257,7 +1258,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("NivelActividad/{id:int}")]
+        [HttpDelete("NivelActividad/Eliminar/{id:int}")]
         [EndpointSummary("Elimina un nivel de Actividad por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarNivelActividad(int id)
         {
@@ -1326,7 +1327,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("ReaccionSocial/{id:int}")]
+        [HttpGet("ReaccionSocial/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de una reaccion Social por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetReaccionSocial(int id)
         {
@@ -1362,7 +1363,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("ReaccionSocial/{id:int}")]
+        [HttpPut("ReaccionSocial/Editar/{id:int}")]
         [EndpointSummary("Edita una reaccion Social existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarReaccionSocial(int id, CatalogoDTO dto)
         {
@@ -1385,7 +1386,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("ReaccionSocial/{id:int}")]
+        [HttpDelete("ReaccionSocial/Eliminar/{id:int}")]
         [EndpointSummary("Elimina una reaccion Social por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarReaccionSocial(int id)
         {
@@ -1454,7 +1455,7 @@ namespace VeTLink.Controllers
         }
 
         // DETALLES
-        [HttpGet("TipoServicio/{id:int}")]
+        [HttpGet("TipoServicio/Detalles/{id:int}")]
         [EndpointSummary("Obtiene detalles de un tipo de Servicio por Id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetTipoServicio(int id)
         {
@@ -1490,7 +1491,7 @@ namespace VeTLink.Controllers
         }
 
         // EDITAR
-        [HttpPut("TipoServicio/{id:int}")]
+        [HttpPut("TipoServicio/Editar/{id:int}")]
         [EndpointSummary("Edita un tipo de Servicio existente.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarTipoServicio(int id, CatalogoDTO dto)
         {
@@ -1513,7 +1514,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("TipoServicio/{id:int}")]
+        [HttpDelete("TipoServicio/Eliminar/{id:int}")]
         [EndpointSummary("Elimina un tipo de Servicio por id.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarTipoServicio(int id)
         {
@@ -1535,6 +1536,260 @@ namespace VeTLink.Controllers
                 respuesta.Message.Add("Elemento eliminado correctamente.");
                 return Ok(respuesta);
 
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("FK"))
+                {
+                    respuesta.Message.Add("El elemento tiene datos vinculados. Eliminación no permitida.");
+                }
+                else
+                {
+                    respuesta.Message.Add(ex.Message);
+                }
+                return respuesta;
+            }
+        }
+
+        //Estado Suscripcion
+        //Listado
+        [HttpGet("EstadoSuscripcion/Listado")]
+        [EndpointSummary("Obtiene la lista de los Estados de Suscripcion.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> GetEstadoSuscripcion()
+        {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            try
+            {
+                var EstadoSuscripcion = await context.EstadosSuscripcion
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var EstadoSuscripcionDto = mapper.Map<List<DetalleCatalogoDTO>>(EstadoSuscripcion);
+
+                respuesta.Status = true;
+                respuesta.Response = EstadoSuscripcionDto;
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al obtener los elementos: {ex.Message}");
+                return respuesta;
+            }
+        }
+
+        // DETALLES
+        [HttpGet("EstadoSuscripcion/Detalles/{id:int}")]
+        [EndpointSummary("Obtiene detalles de un Estado de Suscripcion por Id.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> GetEstadoSuscripcion(int id)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            var EstadoSuscripcion = await context.EstadosSuscripcion.FindAsync(id);
+            if (EstadoSuscripcion == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add("Elemento no encontrado.");
+                return NotFound(respuesta);
+            }
+
+            respuesta.Status = true;
+            respuesta.Response = mapper.Map<DetalleCatalogoDTO>(EstadoSuscripcion);
+            return Ok(respuesta);
+        }
+
+        // CREAR
+        [HttpPost("EstadoSuscripcion/Nuevo")]
+        [EndpointSummary("Crea un nuevo Estado de Suscripcion.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> CrearEstadoSuscripcion(CatalogoDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            var EstadoSuscripcion = mapper.Map<EstadoSuscripcion>(dto);
+            context.EstadosSuscripcion.Add(EstadoSuscripcion);
+            await context.SaveChangesAsync();
+
+            respuesta.Status = true;
+            respuesta.Response = mapper.Map<DetalleCatalogoDTO>(EstadoSuscripcion);
+            return Ok(respuesta);
+        }
+
+        // EDITAR
+        [HttpPut("EstadoSuscripcion/Editar{id:int}")]
+        [EndpointSummary("Edita un Estado de Suscripcion existente.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> EditarEstadoSuscripcion(int id, CatalogoDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            var EstadoSuscripcion = await context.EstadosSuscripcion.FindAsync(id);
+            if (EstadoSuscripcion == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add("Elemento no encontrado.");
+                return NotFound(respuesta);
+            }
+
+            mapper.Map(dto, EstadoSuscripcion);
+            await context.SaveChangesAsync();
+
+            respuesta.Status = true;
+            respuesta.Response = mapper.Map<DetalleCatalogoDTO>(EstadoSuscripcion);
+            return Ok(respuesta);
+        }
+
+        // ELIMINAR
+        [HttpDelete("EstadoSuscripcion/Eliminar/{id:int}")]
+        [EndpointSummary("Elimina un Estado de Suscripcion.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> EliminarEstadoSuscripcion(int id)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+            try
+            {
+                var EstadoSuscripcion = await context.EstadosSuscripcion.FindAsync(id);
+                if (EstadoSuscripcion == null)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add("Elemento no encontrado.");
+                    return NotFound(respuesta);
+                }
+
+                context.EstadosSuscripcion.Remove(EstadoSuscripcion);
+                await context.SaveChangesAsync();
+
+                respuesta.Status = true;
+                respuesta.Message.Add("Elemento eliminado correctamente.");
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("FK"))
+                {
+                    respuesta.Message.Add("El elemento tiene datos vinculados. Eliminación no permitida.");
+                }
+                else
+                {
+                    respuesta.Message.Add(ex.Message);
+                }
+                return respuesta;
+            }
+        }
+
+        //Planes
+        //Listado
+        [HttpGet("Planes/Listado")]
+        [EndpointSummary("Obtiene la lista de los Planes.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> GetPlanes()
+        {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            try
+            {
+                var Planes = await context.Planes
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var PlanesDto = mapper.Map<List<DetalleCatalogoDTO>>(Planes);
+
+                respuesta.Status = true;
+                respuesta.Response = PlanesDto;
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al obtener los elementos: {ex.Message}");
+                return respuesta;
+            }
+        }
+
+        // DETALLES
+        [HttpGet("Planes/Detalles/{id:int}")]
+        [EndpointSummary("Obtiene detalles de un Plan por Id.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> GetPlanes(int id)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            var Planes = await context.Planes.FindAsync(id);
+            if (Planes == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add("Elemento no encontrado.");
+                return NotFound(respuesta);
+            }
+
+            respuesta.Status = true;
+            respuesta.Response = mapper.Map<DetalleCatalogoDTO>(Planes);
+            return Ok(respuesta);
+        }
+
+        // CREAR
+        [HttpPost("Planes/Nuevo")]
+        [EndpointSummary("Crea un nuevo Plan.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> CrearPlan(CatalogoDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            var Planes = mapper.Map<Plan>(dto);
+            context.Planes.Add(Planes);
+            await context.SaveChangesAsync();
+
+            respuesta.Status = true;
+            respuesta.Response = mapper.Map<DetalleCatalogoDTO>(Planes);
+            return Ok(respuesta);
+        }
+
+        // EDITAR
+        [HttpPut("Planes/Editar{id:int}")]
+        [EndpointSummary("Edita un Plan existente.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> EditarPlanes(int id, CatalogoDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            var Planes = await context.Planes.FindAsync(id);
+            if (Planes == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add("Elemento no encontrado.");
+                return NotFound(respuesta);
+            }
+
+            mapper.Map(dto, Planes);
+            await context.SaveChangesAsync();
+
+            respuesta.Status = true;
+            respuesta.Response = mapper.Map<DetalleCatalogoDTO>(Planes);
+            return Ok(respuesta);
+        }
+
+        // ELIMINAR
+        [HttpDelete("Planes/Eliminar/{id:int}")]
+        [EndpointSummary("Elimina un Plan.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> EliminarPlanes(int id)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+            try
+            {
+                var Planes = await context.Planes.FindAsync(id);
+                if (Planes == null)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add("Elemento no encontrado.");
+                    return NotFound(respuesta);
+                }
+
+                context.Planes.Remove(Planes);
+                await context.SaveChangesAsync();
+
+                respuesta.Status = true;
+                respuesta.Message.Add("Elemento eliminado correctamente.");
+                return Ok(respuesta);
             }
             catch (Exception ex)
             {

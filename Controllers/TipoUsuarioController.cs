@@ -19,7 +19,7 @@ namespace VeTLink.Controllers
         }
 
         // LISTADO
-        [HttpGet]
+        [HttpGet("Listado")]
         [EndpointSummary("Obtiene todos los tipos de usuario (Médico, Dueño)")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetAll()
         {
@@ -43,8 +43,8 @@ namespace VeTLink.Controllers
         }
 
         // DETALLE
-        [HttpGet("{id:int}")]
-        [EndpointSummary("Obtiene un tipo de usuario por Id")]
+        [HttpGet("Detalles/{id:int}")]
+        [EndpointSummary("Obtiene los detalles de un tipo de usuario por Id")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetById(int id)
         {
             var respuesta = new RespuestaObjetoDTO();
@@ -64,7 +64,7 @@ namespace VeTLink.Controllers
         }
 
         // CREAR
-        [HttpPost]
+        [HttpPost("Nuevo")]
         [EndpointSummary("Crea un nuevo tipo de usuario (Médico, Dueño)")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Create([FromBody] TipoUsuario model)
         {
@@ -87,7 +87,7 @@ namespace VeTLink.Controllers
         }
 
         // ACTUALIZAR
-        [HttpPut("{id:int}")]
+        [HttpPut("Editar/{id:int}")]
         [EndpointSummary("Actualiza un tipo de usuario existente")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Update(int id, [FromBody] TipoUsuario model)
         {
@@ -118,7 +118,7 @@ namespace VeTLink.Controllers
         }
 
         // ELIMINAR
-        [HttpDelete("{id:int}")]
+        [HttpDelete("Eliminar/{id:int}")]
         [EndpointSummary("Elimina un tipo de usuario por Id")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Delete(int id)
         {

@@ -20,7 +20,7 @@ namespace VeTLink.Controllers
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly IMapper _mapper = mapper;
 
-        [HttpPost("registrar")]
+        [HttpPost("RegistrarClinica")]
         [EndpointSummary("Registra una clínica con su primer administrador de cinica")]
         public async Task<ActionResult<RespuestaObjetoDTO>> RegistrarClinica([FromBody] RegistroClinicaDTO dto)
         {
@@ -31,6 +31,7 @@ namespace VeTLink.Controllers
             {
                 // 1. Mapeo de clínica
                 var clinica = _mapper.Map<Clinica>(dto);
+                clinica.Activo = true;
                 _context.Clinicas.Add(clinica);
                 await _context.SaveChangesAsync();
 
@@ -158,6 +159,113 @@ namespace VeTLink.Controllers
                 respuesta.Message = new() { "Error en el registro", ex.Message };
                 return StatusCode(500, respuesta);
             }
+        }
+
+        // POST: api/Administracion/Suscripcion/Nueva
+        [HttpPost("Suscripcion/Nueva")]
+        [EndpointSummary("Crea una nueva suscripción para una clínica")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> CreateSuscripcion(CrearSuscripcionDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO();
+
+            // Validar clínica
+            var clinica = await _context.Clinicas.FindAsync(dto.ClinicaId);
+            if (clinica == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se encontró la clínica." };
+                return NotFound(respuesta);
+            }
+
+            var suscripcion = new Suscripcion
+            {
+                Id = Guid.NewGuid(),
+                Renovacion = dto.Renovacion,
+                PlanId = dto.PlanId,
+                ClinicaId = dto.ClinicaId,
+                FechaAlta = DateTime.UtcNow,
+                EstadoSuscripcionId = 1 // Activo por default
+            };
+
+            // Solo planes 2 y 3 tienen vigencia de un año
+            if (dto.PlanId == 2 || dto.PlanId == 3)
+            {
+                suscripcion.Vigencia = suscripcion.FechaAlta.Value.AddYears(1);
+            }
+
+            _context.Suscripciones.Add(suscripcion);
+            await _context.SaveChangesAsync();
+
+            // Reconsultar para mapear con Plan y Estado
+            var creada = await _context.Suscripciones
+                .Include(s => s.Plan)
+                .Include(s => s.EstadoSuscripcion)
+                .Include(s => s.Clinica)
+                .AsNoTracking()
+                .FirstAsync(s => s.Id == suscripcion.Id);
+
+            var detalle = _mapper.Map<DetalleSuscripcionDTO>(creada);
+
+            // Calcular próxima fecha de pago (vigencia - 10 días)
+            if (detalle.Vigencia.HasValue)
+                detalle.ProximaFechaPago = detalle.Vigencia.Value.AddDays(-10);
+
+            var createdRespuesta = new RespuestaObjetoDTO
+            {
+                Status = true,
+                Response = detalle,
+                Message = new() { "Suscripción creada correctamente." }
+            };
+
+            return CreatedAtAction(nameof(CreateSuscripcion), new { id = suscripcion.Id }, createdRespuesta);
+        }
+
+        // PUT: api/Administracion/Suscripcion/Actualizar
+        [HttpPut("Suscripcion/Actualizar")]
+        [EndpointSummary("Actualizar una suscripción (renovar, suspender o cancelar)")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> UpdateSuscripcion(UpdateSuscripcionDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO();
+
+            var suscripcion = await _context.Suscripciones
+                .FirstOrDefaultAsync(s => s.Id == dto.Id);
+
+            if (suscripcion == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se encontró la suscripción." };
+                return NotFound(respuesta);
+            }
+
+            // Actualizar renovación
+            if (dto.Renovacion.HasValue)
+                suscripcion.Renovacion = dto.Renovacion.Value;
+
+            // Renovar (extender vigencia)
+            if (dto.NuevaVigencia.HasValue)
+                suscripcion.Vigencia = dto.NuevaVigencia.Value;
+
+            // Cambiar estado (1-Activo, 2-Suspendido, 3-Cancelado)
+            if (dto.EstadoSuscripcionId.HasValue)
+            {
+                if (dto.EstadoSuscripcionId < 1 || dto.EstadoSuscripcionId > 3)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message = new() { "Estado de suscripción inválido." };
+                    return BadRequest(respuesta);
+                }
+
+                suscripcion.EstadoSuscripcionId = dto.EstadoSuscripcionId;
+            }
+
+            _context.Suscripciones.Update(suscripcion);
+            await _context.SaveChangesAsync();
+
+            respuesta.Status = true;
+            respuesta.Message = new() { "Suscripción actualizada correctamente." };
+            respuesta.Response = suscripcion;
+
+            return Ok(respuesta);
         }
     }
 }

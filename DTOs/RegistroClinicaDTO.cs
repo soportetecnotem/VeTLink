@@ -7,6 +7,8 @@
         public string? Telefono { get; set; }
         public string? SitioWeb { get; set; }
         public string? EmailClinica { get; set; }
+        public bool Activo {  get; set; }
+        public int? SuscripcionId { get; set; }
 
         // Dirección
         public DireccionDTO? Direccion { get; set; }

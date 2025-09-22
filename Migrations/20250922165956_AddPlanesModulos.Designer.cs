@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VeTLink.Data;
 
@@ -11,9 +12,11 @@ using VeTLink.Data;
 namespace VeTLink.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250922165956_AddPlanesModulos")]
+    partial class AddPlanesModulos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -335,11 +338,11 @@ namespace VeTLink.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("PlanId")
+                        .HasColumnType("int");
+
                     b.Property<string>("SitioWeb")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("SuscripcionId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
@@ -350,6 +353,8 @@ namespace VeTLink.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DireccionId");
+
+                    b.HasIndex("PlanId");
 
                     b.HasIndex("VeterinarioId");
 
@@ -616,22 +621,6 @@ namespace VeTLink.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("EstadosGeneral");
-                });
-
-            modelBuilder.Entity("VeTLink.Models.EstadoSuscripcion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Descripcion")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EstadosSuscripcion");
                 });
 
             modelBuilder.Entity("VeTLink.Models.EventoCalendario", b =>
@@ -1092,6 +1081,9 @@ namespace VeTLink.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)");
 
@@ -1101,6 +1093,9 @@ namespace VeTLink.Migrations
 
                     b.Property<double>("Precio")
                         .HasColumnType("float");
+
+                    b.Property<DateTime?>("Vigencia")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -1239,43 +1234,6 @@ namespace VeTLink.Migrations
                     b.HasIndex("UnidadTiempoId");
 
                     b.ToTable("SintomasActuales");
-                });
-
-            modelBuilder.Entity("VeTLink.Models.Suscripcion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("ClinicaId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("EstadoSuscripcionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("FechaAlta")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("PlanId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Renovacion")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("Vigencia")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClinicaId")
-                        .IsUnique()
-                        .HasFilter("[ClinicaId] IS NOT NULL");
-
-                    b.HasIndex("EstadoSuscripcionId");
-
-                    b.HasIndex("PlanId");
-
-                    b.ToTable("Suscripciones");
                 });
 
             modelBuilder.Entity("VeTLink.Models.TipoCirugia", b =>
@@ -1571,12 +1529,19 @@ namespace VeTLink.Migrations
                         .HasForeignKey("DireccionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("VeTLink.Models.Plan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("VeTLink.Models.Veterinario", null)
                         .WithMany("ClinicasAsignadas")
                         .HasForeignKey("VeterinarioId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Direccion");
+
+                    b.Navigation("Plan");
                 });
 
             modelBuilder.Entity("VeTLink.Models.ComportamientoSocializacion", b =>
@@ -1923,30 +1888,6 @@ namespace VeTLink.Migrations
                     b.Navigation("UnidadTiempo");
                 });
 
-            modelBuilder.Entity("VeTLink.Models.Suscripcion", b =>
-                {
-                    b.HasOne("VeTLink.Models.Clinica", "Clinica")
-                        .WithOne("Suscripcion")
-                        .HasForeignKey("VeTLink.Models.Suscripcion", "ClinicaId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("VeTLink.Models.EstadoSuscripcion", "EstadoSuscripcion")
-                        .WithMany()
-                        .HasForeignKey("EstadoSuscripcionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("VeTLink.Models.Plan", "Plan")
-                        .WithMany()
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Clinica");
-
-                    b.Navigation("EstadoSuscripcion");
-
-                    b.Navigation("Plan");
-                });
-
             modelBuilder.Entity("VeTLink.Models.Tratamiento", b =>
                 {
                     b.HasOne("VeTLink.Models.TipoTratamiento", "TipoTratamiento")
@@ -1987,11 +1928,6 @@ namespace VeTLink.Migrations
                     b.Navigation("RegistroProfilaxis");
 
                     b.Navigation("RegistroVacunas");
-                });
-
-            modelBuilder.Entity("VeTLink.Models.Clinica", b =>
-                {
-                    b.Navigation("Suscripcion");
                 });
 
             modelBuilder.Entity("VeTLink.Models.ConsultaMedica", b =>

@@ -11,13 +11,22 @@ namespace VeTLink.Utilidades
         {
             // Persona PersonaDto
             CreateMap<Persona, PersonaDTO>()
-            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Usuario.Email));
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Usuario.Email)).ReverseMap();
 
+            // Persona DetallePersonaDTO
             CreateMap<Persona, DetallePersonaDTO>()
-            .ForMember(dest => dest.TipoUsuarioNombre,
-                       opt => opt.MapFrom(src => src.TipoUsuario != null ? src.TipoUsuario.Nombre : null));
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Usuario.Email))
+                .ForMember(dest => dest.TipoUsuarioNombre, opt => opt.MapFrom(src => src.TipoUsuario != null ? src.TipoUsuario.Nombre : null))
+                .ForMember(dest => dest.DireccionDTO, opt => opt.MapFrom(src => src.Direccion));
 
-            CreateMap<Persona, CreatePersonaDTO>().ReverseMap();
+            // CreatePersonaDTO  Persona
+            CreateMap<CreatePersonaDTO, Persona>()
+                .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Direccion));
+
+            // Persona  ListadoPersonaDTO
+            CreateMap<Persona, ListadoPersonaDTO>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Usuario.Email))
+                .ForMember(dest => dest.TipoUsuarioNombre, opt => opt.MapFrom(src => src.TipoUsuario != null ? src.TipoUsuario.Nombre : null));
 
             // RegisterDto Persona
             CreateMap<RegisterDto, Persona>();
@@ -84,16 +93,27 @@ namespace VeTLink.Utilidades
                 .ForMember(dto => dto.Descripcion, config => config.MapFrom(ent => ent.Unidad))
                 .ReverseMap();
 
+            CreateMap<Plan, CatalogoDTO>().ReverseMap();
+            CreateMap<Plan, DetalleCatalogoDTO>().ReverseMap();
+
+            CreateMap<EstadoSuscripcion, CatalogoDTO>().ReverseMap();
+            CreateMap<EstadoSuscripcion, DetalleCatalogoDTO>().ReverseMap();
+
             // Direccion
             CreateMap<DireccionDTO, Direccion>().ReverseMap();
+            CreateMap<DetalleDireccionDTO, Direccion>().ReverseMap();
 
             // Clinica
             CreateMap<RegistroClinicaDTO, Clinica>()
                 .ForMember(dto => dto.Direccion, config => config.MapFrom(ent => ent.Direccion))
-                .ForMember(dto => dto.Email, config => config.MapFrom(ent => ent.EmailClinica));
+                .ForMember(dto => dto.Email, config => config.MapFrom(ent => ent.EmailClinica))
+                .ForMember(dto => dto.SuscripcionId, config => config.MapFrom(ent => ent.SuscripcionId));
             
             CreateMap<Clinica, ClinicaDTO>().ReverseMap();
-            CreateMap<Clinica, DetalleClinicaDTO>().ReverseMap();
+
+            CreateMap<Clinica, DetalleClinicaDTO>()
+                .ForMember(dto => dto.SuscripcionId, config => config.MapFrom(ent => ent.SuscripcionId))
+                .ReverseMap();
 
             // Primer registro de la clinica con su admin clinica
             CreateMap<RegistroClinicaDTO, Persona>()
@@ -112,6 +132,16 @@ namespace VeTLink.Utilidades
                 .ForMember(dest => dest.ClinicasAsignadas, opt => opt.Ignore());
 
             CreateMap<Veterinario, VeterinarioDTO>().ReverseMap();
+
+            //Suscripcion
+            CreateMap<CrearSuscripcionDTO, Suscripcion>()
+                .ForMember(dest => dest.FechaAlta, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.EstadoSuscripcionId, opt => opt.MapFrom(_ => 1)); // 1 = Activa por defecto
+
+            CreateMap<Suscripcion, DetalleSuscripcionDTO>()
+                .ForMember(dest => dest.EstadoSuscripcionNombre, opt => opt.MapFrom(src => src.EstadoSuscripcion != null ? src.EstadoSuscripcion.Descripcion : null))
+                .ForMember(dest => dest.PlanNombre, opt => opt.MapFrom(src => src.Plan != null ? src.Plan.NombrePlan : null))
+                .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Clinica != null ? src.Clinica.NombreClinica : null));
         }
     }
 }

@@ -21,12 +21,14 @@ namespace VeTLink.Controllers
         private readonly IMapper mapper = mapper;
     
 
-    // GET: api/clinica
+    // Listado
         [HttpGet("Listado")]
+        [EndpointSummary("Listado de clinicas")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetClinicas()
         {
             var clinicas = await context.Clinicas
                 .Include(c => c.Direccion)
+                .Include(c => c.Suscripcion)
                 .ToListAsync();
 
             var clinicasDTO = mapper.Map<List<DetalleClinicaDTO>>(clinicas);
@@ -38,12 +40,14 @@ namespace VeTLink.Controllers
             };
         }
 
-        // GET: api/clinica/{id}
-        [HttpGet("{id:int}")]
+        // Detalles
+        [HttpGet("Detalles/{id:int}")]
+        [EndpointSummary("Obtiene los detalles de una clinica por ID")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetClinica(int id)
         {
             var clinica = await context.Clinicas
                 .Include(c => c.Direccion)
+                .Include(c => c.Suscripcion)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (clinica == null)
@@ -64,11 +68,13 @@ namespace VeTLink.Controllers
             };
         }
 
-        // POST: api/clinica
+        // Nuevo
         [HttpPost("Nuevo")]
+        [EndpointSummary("Crea un nuevo registro de clinica")]
         public async Task<ActionResult<RespuestaObjetoDTO>> CrearClinica([FromBody] ClinicaDTO dto)
         {
             var clinica = mapper.Map<Clinica>(dto);
+            clinica.Activo = true;
 
             context.Clinicas.Add(clinica);
             await context.SaveChangesAsync();
@@ -83,12 +89,14 @@ namespace VeTLink.Controllers
             };
         }
 
-        // PUT: api/clinica/{id}
-        [HttpPut("{id:int}")]
+        // Actualizar
+        [HttpPut("Actualizar/{id:int}")]
+        [EndpointSummary("Actualiza la informacion de una clinica")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EditarClinica(int id, [FromBody] ClinicaDTO dto)
         {
             var clinica = await context.Clinicas
                 .Include(c => c.Direccion)
+                .Include(c => c.Suscripcion)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (clinica == null)
@@ -113,8 +121,9 @@ namespace VeTLink.Controllers
             };
         }
 
-        // DELETE: api/clinicas/{id}
-        [HttpDelete("{id:int}")]
+        // DELETE
+        [HttpDelete("Eliminar/{id:int}")]
+        [EndpointSummary("Elimina una clinica")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarClinica(int id)
         {
             var clinica = await context.Clinicas
