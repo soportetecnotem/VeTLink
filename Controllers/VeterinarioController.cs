@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using VeTLink.Data;
 using VeTLink.DTOs;
 using VeTLink.DTOs.Responses;
@@ -23,104 +25,204 @@ namespace VeTLink.Controllers
         }
 
         [HttpPost("Nuevo")]
+        [Authorize]
+        [EndpointSummary("Crea un nuevo veterinario")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Crear(CreateVeterinarioDTO dto)
         {
             var respuesta = new RespuestaObjetoDTO();
 
-            //int? clinicaDelAdmin = null;
+            // 1️ Obtener Id del usuario autenticado (desde el token)
+            var userId = User.FindFirst("UserId")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se pudo identificar al usuario que realiza la petición." };
+                return Unauthorized(respuesta);
+            }
 
-            //// Validamos si el usuario es AdminClinica (según el token)
-            //var roleClaim = User.FindFirst("Roles")?.Value; // Claim de rol
-            //if (roleClaim != null && roleClaim.Equals("AdminClinica", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    var claimClinica = User.FindFirst("ClinicaId"); // Claim adicional con la clínica asignada
-            //    if (claimClinica != null)
-            //        clinicaDelAdmin = int.Parse(claimClinica.Value);
+            // 2️ Buscar persona del usuario autenticado
+            var personaAdmin = await _context.Personas
+                .Include(p => p.TipoUsuario)
+                .FirstOrDefaultAsync(p => p.UsuarioId == userId);
 
-            //    if (!dto.ClinicaId.HasValue || dto.ClinicaId != clinicaDelAdmin)
-            //    {
-            //        respuesta.Status = false;
-            //        respuesta.Message = new() { "Un AdminClinica solo puede registrar veterinarios en su propia clínica." };
-            //        return BadRequest(respuesta);
-            //    }
-            //}
+            if (personaAdmin == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se encontró la persona asociada al usuario actual." };
+                return Unauthorized(respuesta);
+            }
 
+            // 3️ Validar que la sucursal exista
+            var sucursal = await _context.Sucursales
+                .Include(s => s.Clinica)
+                .FirstOrDefaultAsync(s => s.Id == dto.SucursalId);
 
-            //var persona = _mapper.Map<Persona>(dto.Persona);
+            if (sucursal == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "Sucursal no encontrada." };
+                return NotFound(respuesta);
+            }
 
-            //var veterinario = new Veterinario
-            //{
-            //    Id = Guid.NewGuid(),
-            //    CedulaProfesional = dto.CedulaProfesional,
-            //    Horarios = dto.Horarios,
-            //    Persona = persona
-            //};
+            // 4️ Si el usuario autenticado es AdminClinica, validar que la sucursal pertenezca a su clínica
+            if (personaAdmin.TipoUsuario?.Nombre?.Equals("AdminClinica", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                if (personaAdmin.ClinicaId == null)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message = new() { "El administrador no tiene una clínica asignada." };
+                    return BadRequest(respuesta);
+                }
 
-            //if (dto.ClinicaId.HasValue)
-            //{
-            //    var clinica = await _context.Clinicas.FindAsync(dto.ClinicaId.Value);
-            //    if (clinica == null)
-            //    {
-            //        respuesta.Status = false;
-            //        respuesta.Message = new() { "Clínica no encontrada." };
-            //        return NotFound(respuesta);
-            //    }
-            //    veterinario.ClinicasAsignadas.Add(clinica);
-            //}
+                if (sucursal.ClinicaId != personaAdmin.ClinicaId)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message = new()
+            {
+                "Un AdminClinica solo puede registrar veterinarios en sucursales que pertenezcan a su propia clínica."
+            };
+                    return BadRequest(respuesta);
+                }
+            }
 
-            //_context.Veterinarios.Add(veterinario);
-            //await _context.SaveChangesAsync();
+            // 5️ Mapear la persona desde el DTO
+            var personaVeterinario = _mapper.Map<Persona>(dto.Persona);
+            personaVeterinario.TipoUsuarioId = await _context.TiposUsuarios
+                .Where(t => t.Nombre == "Veterinario")
+                .Select(t => t.Id)
+                .FirstOrDefaultAsync();
 
-            //var detalle = _mapper.Map<DetalleVeterinarioDTO>(veterinario);
-            //respuesta.Status = true;
-            //respuesta.Response = detalle;
-            //respuesta.Message = new() { "Veterinario creado correctamente." };
+            if (personaVeterinario.TipoUsuarioId == 0)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se encontró el tipo de usuario 'Veterinario'." };
+                return BadRequest(respuesta);
+            }
+
+            // 6️ Crear el veterinario con AutoMapper
+            var veterinario = _mapper.Map<Veterinario>(dto);
+            veterinario.Persona = personaVeterinario;
+
+            // Asociar la sucursal existente
+            veterinario.SucursalesAsignadas = new List<Sucursal> { sucursal };
+
+            _context.Veterinarios.Add(veterinario);
+            await _context.SaveChangesAsync();
+
+            // 7️ Preparar respuesta
+            var detalle = _mapper.Map<DetalleVeterinarioDTO>(veterinario);
+            respuesta.Status = true;
+            respuesta.Response = detalle;
+            respuesta.Message = new() { "Veterinario creado correctamente." };
+
             return Ok(respuesta);
         }
 
-        // ACTUALIZAR
         [HttpPut("Actualizar/{id:guid}")]
-        [EndpointSummary("Actualiza un veterinario existente con su persona y clínica")]
+        [Authorize]
+        [EndpointSummary("Actualiza un veterinario existente con su persona y sucursal")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Editar(Guid id, UpdateVeterinarioDTO dto)
         {
             var respuesta = new RespuestaObjetoDTO();
 
-            //var veterinario = await _context.Veterinarios
-            //    .Include(v => v.Persona)
-            //    .ThenInclude(p => p.Direccion)
-            //    .Include(v => v.ClinicasAsignadas)
-            //    .FirstOrDefaultAsync(v => v.Id == id);
+            // 1️ Buscar el veterinario con sus relaciones
+            var veterinario = await _context.Veterinarios
+                .Include(v => v.Persona)
+                    .ThenInclude(p => p.Direccion)
+                .Include(v => v.SucursalesAsignadas)
+                    .ThenInclude(s => s.Clinica)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            //if (veterinario == null)
-            //{
-            //    respuesta.Status = false;
-            //    respuesta.Message = new() { "Veterinario no encontrado." };
-            //    return NotFound(respuesta);
-            //}
+            if (veterinario == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "Veterinario no encontrado." };
+                return NotFound(respuesta);
+            }
 
-            //// Actualizar veterinario
-            //veterinario.CedulaProfesional = dto.CedulaProfesional;
-            //veterinario.Horarios = dto.Horarios;
+            // 2️ Obtener el usuario que realiza la acción
+            var userId = User.FindFirst("UserId")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se pudo identificar al usuario autenticado." };
+                return Unauthorized(respuesta);
+            }
 
-            //// Actualizar persona y dirección
-            //_mapper.Map(dto.Persona, veterinario.Persona);
+            var personaAdmin = await _context.Personas
+                .Include(p => p.TipoUsuario)
+                .FirstOrDefaultAsync(p => p.UsuarioId == userId);
 
-            //// Actualizar clínica (si aplica)
-            //if (dto.ClinicaId.HasValue)
-            //{
-            //    var clinica = await _context.Clinicas.FindAsync(dto.ClinicaId.Value);
-            //    if (clinica != null && !veterinario.ClinicasAsignadas.Any(c => c.Id == dto.ClinicaId))
-            //    {
-            //        veterinario.ClinicasAsignadas.Add(clinica);
-            //    }
-            //}
+            if (personaAdmin == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se encontró la persona asociada al usuario actual." };
+                return Unauthorized(respuesta);
+            }
 
-            //await _context.SaveChangesAsync();
+            // 3️ Validar que la sucursal exista (si se envía)
+            Sucursal? sucursal = null;
+            if (dto.SucursalId.HasValue)
+            {
+                sucursal = await _context.Sucursales
+                    .Include(s => s.Clinica)
+                    .FirstOrDefaultAsync(s => s.Id == dto.SucursalId.Value);
 
-            //var detalle = _mapper.Map<DetalleVeterinarioDTO>(veterinario);
-            //respuesta.Status = true;
-            //respuesta.Response = detalle;
-            //respuesta.Message = new() { "Veterinario actualizado correctamente." };
+                if (sucursal == null)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message = new() { "Sucursal no encontrada." };
+                    return NotFound(respuesta);
+                }
+
+                // Validación si es AdminClinica
+                if (personaAdmin.TipoUsuario?.Nombre?.Equals("AdminClinica", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    if (personaAdmin.ClinicaId == null)
+                    {
+                        respuesta.Status = false;
+                        respuesta.Message = new() { "El administrador no tiene una clínica asignada." };
+                        return BadRequest(respuesta);
+                    }
+
+                    if (sucursal.ClinicaId != personaAdmin.ClinicaId)
+                    {
+                        respuesta.Status = false;
+                        respuesta.Message = new()
+                {
+                    "Un AdminClinica solo puede editar veterinarios asignados a sucursales de su propia clínica."
+                };
+                        return BadRequest(respuesta);
+                    }
+                }
+            }
+
+            // 4️ Actualizar datos del veterinario
+            veterinario.CedulaProfesional = dto.CedulaProfesional;
+            veterinario.Horarios = dto.Horarios;
+
+            // 5️ Actualizar datos de persona (AutoMapper lo hace sin sobrescribir objetos anidados como dirección)
+            _mapper.Map(dto.Persona, veterinario.Persona);
+
+            // 6️ Actualizar sucursales asignadas
+            if (sucursal != null)
+            {
+                var sucursalAsignada = veterinario.SucursalesAsignadas.FirstOrDefault(s => s.Id == sucursal.Id);
+                if (sucursalAsignada == null)
+                {
+                    veterinario.SucursalesAsignadas.Clear();
+                    veterinario.SucursalesAsignadas.Add(sucursal);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            // 7️ Generar respuesta
+            var detalle = _mapper.Map<DetalleVeterinarioDTO>(veterinario);
+            respuesta.Status = true;
+            respuesta.Response = detalle;
+            respuesta.Message = new() { "Veterinario actualizado correctamente." };
+
             return Ok(respuesta);
         }
 

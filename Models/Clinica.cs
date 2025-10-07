@@ -12,6 +12,5 @@
         public Suscripcion? Suscripcion { get; set; }
 
         public ICollection<Sucursal> Sucursales { get; set; } = new List<Sucursal>();
-
     }
 }

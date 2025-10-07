@@ -9,6 +9,7 @@
         public Guid? PersonaId { get; set; }
         public Persona? Persona { get; set; }
 
+        // Un veterinario puede tener varias sucursales
         public ICollection<Sucursal> SucursalesAsignadas { get; set; } = new List<Sucursal>();
 
     }

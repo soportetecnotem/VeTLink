@@ -15,5 +15,7 @@
 
         public int? ClinicaId { get; set; }
         public Clinica? Clinica { get; set; }
+
+        public ICollection<Veterinario> Veterinarios { get; set; } = new List<Veterinario>();
     }
 }

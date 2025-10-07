@@ -267,7 +267,7 @@ namespace VeTLink.Controllers
 
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new("UserId", user.Id),
                 new(JwtRegisteredClaimNames.Email, user.Email ?? ""),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VeTLink.Data;
 
@@ -11,9 +12,11 @@ using VeTLink.Data;
 namespace VeTLink.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251007150042_Sucursales")]
+    partial class Sucursales
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,21 +221,6 @@ namespace VeTLink.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("SucursalVeterinario", b =>
-                {
-                    b.Property<int>("SucursalesAsignadasId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("VeterinariosId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("SucursalesAsignadasId", "VeterinariosId");
-
-                    b.HasIndex("VeterinariosId");
-
-                    b.ToTable("SucursalVeterinario");
                 });
 
             modelBuilder.Entity("VeTLink.Models.Alergia", b =>
@@ -1039,9 +1027,6 @@ namespace VeTLink.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("ClinicaId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("DireccionId")
                         .HasColumnType("int");
 
@@ -1079,8 +1064,6 @@ namespace VeTLink.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ClinicaId");
 
                     b.HasIndex("DireccionId");
 
@@ -1280,11 +1263,16 @@ namespace VeTLink.Migrations
                     b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("VeterinarioId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClinicaId");
 
                     b.HasIndex("DireccionId");
+
+                    b.HasIndex("VeterinarioId");
 
                     b.ToTable("Sucursales");
                 });
@@ -1562,21 +1550,6 @@ namespace VeTLink.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("SucursalVeterinario", b =>
-                {
-                    b.HasOne("VeTLink.Models.Sucursal", null)
-                        .WithMany()
-                        .HasForeignKey("SucursalesAsignadasId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("VeTLink.Models.Veterinario", null)
-                        .WithMany()
-                        .HasForeignKey("VeterinariosId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -1890,11 +1863,6 @@ namespace VeTLink.Migrations
 
             modelBuilder.Entity("VeTLink.Models.Persona", b =>
                 {
-                    b.HasOne("VeTLink.Models.Clinica", "Clinica")
-                        .WithMany()
-                        .HasForeignKey("ClinicaId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("VeTLink.Models.Direccion", "Direccion")
                         .WithMany()
                         .HasForeignKey("DireccionId")
@@ -1910,8 +1878,6 @@ namespace VeTLink.Migrations
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Clinica");
 
                     b.Navigation("Direccion");
 
@@ -1988,6 +1954,11 @@ namespace VeTLink.Migrations
                     b.HasOne("VeTLink.Models.Direccion", "Direccion")
                         .WithMany()
                         .HasForeignKey("DireccionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VeTLink.Models.Veterinario", null)
+                        .WithMany("SucursalesAsignadas")
+                        .HasForeignKey("VeterinarioId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Clinica");
@@ -2110,6 +2081,11 @@ namespace VeTLink.Migrations
             modelBuilder.Entity("VeTLink.Models.Tratamiento", b =>
                 {
                     b.Navigation("Medicamentos");
+                });
+
+            modelBuilder.Entity("VeTLink.Models.Veterinario", b =>
+                {
+                    b.Navigation("SucursalesAsignadas");
                 });
 #pragma warning restore 612, 618
         }

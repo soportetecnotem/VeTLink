@@ -2,7 +2,7 @@
 {
     public class UpdateVeterinarioDTO : VeterinarioDTO
     {
-        public int? ClinicaId { get; set; }
+        public int? SucursalId { get; set; }
         public DetallePersonaDTO Persona { get; set; } = null!;
     }
 }

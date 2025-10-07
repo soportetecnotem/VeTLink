@@ -22,5 +22,9 @@ namespace VeTLink.Models
 
         public int? DireccionId { get; set; }
         public Direccion? Direccion { get; set; }
+
+        // Clínicas (solo si aplica)
+        public int? ClinicaId { get; set; } // Solo si es admin
+        public Clinica? Clinica { get; set; }
     }
 }
