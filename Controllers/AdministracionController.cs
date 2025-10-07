@@ -83,23 +83,23 @@ namespace VeTLink.Controllers
                 {
                     var veterinario = _mapper.Map<Veterinario>(dto);
                     veterinario.Persona = persona;
-                    veterinario.ClinicasAsignadas.Add(clinica);
+                    //veterinario.ClinicasAsignadas.Add(clinica);
 
                     _context.Veterinarios.Add(veterinario);
 
-                    // 5. Verificar si es el primer veterinario de la clínica
-                    var totalVeterinariosEnClinica = _context.Veterinarios
-                        .Where(v => v.ClinicasAsignadas.Any(c => c.Id == clinica.Id))
-                        .Count();
+                    //// 5. Verificar si es el primer veterinario de la clínica
+                    //var totalVeterinariosEnClinica = _context.Veterinarios
+                    //    .Where(v => v.ClinicasAsignadas.Any(c => c.Id == clinica.Id))
+                    //    .Count();
 
-                    if (totalVeterinariosEnClinica == 1) // es el primer veterinario
-                    {
-                        // Aseguramos que exista el rol "AdminClinica"
-                        if (!await _roleManager.RoleExistsAsync("AdminClinica"))
-                        {
-                            await _roleManager.CreateAsync(new IdentityRole("AdminClinica"));
-                        }
-                    }
+                    //if (totalVeterinariosEnClinica == 1) // es el primer veterinario
+                    //{
+                    //    // Aseguramos que exista el rol "AdminClinica"
+                    //    if (!await _roleManager.RoleExistsAsync("AdminClinica"))
+                    //    {
+                    //        await _roleManager.CreateAsync(new IdentityRole("AdminClinica"));
+                    //    }
+                    //}
 
                     await _context.SaveChangesAsync();
 

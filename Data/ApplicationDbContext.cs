@@ -48,6 +48,7 @@ namespace VeTLink.Data
         public DbSet<Receta> Recetas { get; set; }
         public DbSet<SintomaActual> SintomasActuales { get; set; }
         public DbSet<Suscripcion> Suscripciones { get; set; }
+        public DbSet<Sucursal> Sucursales { get; set; }
         public DbSet<TipoCirugia> TiposCirugias { get; set; }
         public DbSet<TipoPrueba> TiposPruebas { get; set; }
         public DbSet<TipoServicio> TiposServicios { get; set; }

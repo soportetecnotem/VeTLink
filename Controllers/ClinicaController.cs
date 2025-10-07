@@ -19,35 +19,47 @@ namespace VeTLink.Controllers
         private readonly UserManager<IdentityUser> userManager = userManager;
         private readonly RoleManager<IdentityRole> roleManager = roleManager;
         private readonly IMapper mapper = mapper;
-    
 
-    // Listado
+
+        // Listado
         [HttpGet("Listado")]
         [EndpointSummary("Listado de clinicas")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetClinicas()
         {
-            var clinicas = await context.Clinicas
-                .Include(c => c.Direccion)
-                .Include(c => c.Suscripcion)
-                .ToListAsync();
+            var respuesta = new RespuestaObjetoDTO();
 
-            var clinicasDTO = mapper.Map<List<DetalleClinicaDTO>>(clinicas);
-
-            return new RespuestaObjetoDTO
+            try
             {
-                Status = true,
-                Response = clinicasDTO
-            };
+                var clinicas = await context.Clinicas
+                    .Include(c => c.Suscripcion)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var clinicasDTO = mapper.Map<List<DetalleClinicaDTO>>(clinicas);
+
+                respuesta.Status = true;
+                respuesta.Response = clinicasDTO;
+                respuesta.Message = new List<string> { "Listado de clínicas obtenido correctamente." };
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new List<string> { "Error al obtener clínicas.", ex.Message };
+                return StatusCode(StatusCodes.Status500InternalServerError, respuesta);
+            }
         }
 
         // Detalles
         [HttpGet("Detalles/{id:int}")]
-        [EndpointSummary("Obtiene los detalles de una clinica por ID")]
+        [EndpointSummary("Obtiene los detalles de una clínica por ID")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetClinica(int id)
         {
             var clinica = await context.Clinicas
-                .Include(c => c.Direccion)
                 .Include(c => c.Suscripcion)
+                .Include(c => c.Sucursales)
+                    .ThenInclude(s => s.Direccion)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (clinica == null)
@@ -91,11 +103,12 @@ namespace VeTLink.Controllers
 
         // Actualizar
         [HttpPut("Actualizar/{id:int}")]
-        [EndpointSummary("Actualiza la informacion de una clinica")]
-        public async Task<ActionResult<RespuestaObjetoDTO>> EditarClinica(int id, [FromBody] ClinicaDTO dto)
+        [EndpointSummary("Actualiza la información de una clínica y sus sucursales")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> EditarClinica(int id, [FromBody] DetalleClinicaDTO dto)
         {
             var clinica = await context.Clinicas
-                .Include(c => c.Direccion)
+                .Include(c => c.Sucursales)
+                    .ThenInclude(s => s.Direccion)
                 .Include(c => c.Suscripcion)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -108,7 +121,46 @@ namespace VeTLink.Controllers
                 });
             }
 
+            // Actualizar datos de la clínica
             mapper.Map(dto, clinica);
+
+            // Manejo de sucursales
+            if (dto.Sucursales != null)
+            {
+                foreach (var sucursalDto in dto.Sucursales)
+                {
+                    if (sucursalDto.Id == 0)
+                    {
+                        // Nueva sucursal
+                        var nuevaSucursal = mapper.Map<Sucursal>(sucursalDto);
+                        clinica.Sucursales.Add(nuevaSucursal);
+                    }
+                    else
+                    {
+                        // Buscar sucursal existente
+                        var sucursalExistente = clinica.Sucursales.FirstOrDefault(s => s.Id == sucursalDto.Id);
+                        if (sucursalExistente != null)
+                        {
+                            // Actualizar datos de la sucursal
+                            mapper.Map(sucursalDto, sucursalExistente);
+
+                            // Si viene dirección, actualizarla también
+                            if (sucursalDto.Direccion != null)
+                            {
+                                if (sucursalExistente.Direccion == null)
+                                {
+                                    sucursalExistente.Direccion = mapper.Map<Direccion>(sucursalDto.Direccion);
+                                }
+                                else
+                                {
+                                    mapper.Map(sucursalDto.Direccion, sucursalExistente.Direccion);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             await context.SaveChangesAsync();
 
             var detalleDto = mapper.Map<DetalleClinicaDTO>(clinica);
@@ -123,11 +175,12 @@ namespace VeTLink.Controllers
 
         // DELETE
         [HttpDelete("Eliminar/{id:int}")]
-        [EndpointSummary("Elimina una clinica")]
+        [EndpointSummary("Elimina una clínica")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarClinica(int id)
         {
             var clinica = await context.Clinicas
-                .Include(c => c.Direccion)
+                .Include(c => c.Sucursales)
+                .Include(c => c.Suscripcion)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (clinica == null)
@@ -139,12 +192,27 @@ namespace VeTLink.Controllers
                 });
             }
 
-            // Si la clínica tiene dirección, la eliminamos primero
-            if (clinica.Direccion != null)
+            // Validar que no tenga sucursales
+            if (clinica.Sucursales.Any())
             {
-                context.Direcciones.Remove(clinica.Direccion);
+                return BadRequest(new RespuestaObjetoDTO
+                {
+                    Status = false,
+                    Message = new List<string> { "No se puede eliminar la clínica porque tiene sucursales asociadas" }
+                });
             }
 
+            // Validar que no tenga suscripción activa
+            if (clinica.SuscripcionId != null)
+            {
+                return BadRequest(new RespuestaObjetoDTO
+                {
+                    Status = false,
+                    Message = new List<string> { "No se puede eliminar la clínica porque tiene una suscripción asociada" }
+                });
+            }
+
+            // Si no hay relaciones, se elimina
             context.Clinicas.Remove(clinica);
             await context.SaveChangesAsync();
 

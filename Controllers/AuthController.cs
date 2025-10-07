@@ -62,8 +62,38 @@ namespace VeTLink.Controllers
                 }
 
                 return respuesta;
+            }            
+        }
+
+        [HttpGet("Detalles/{userName}")]
+        //[Authorize]
+        [EndpointSummary("Obtiene los detalles de un usuario por su UserName.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> GetUsuarioPorUserName(string userName)
+        {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            var usuario = await userManager.FindByNameAsync(userName);
+
+            if (usuario is null)
+            {
+                respuesta.Message.Add("Usuario no encontrado.");
+                return NotFound(respuesta);
             }
-            
+
+            var usuarioDTO = mapper.Map<UsuarioDTO>(usuario);
+            usuarioDTO.Roles = await (from ur in context.UserRoles
+                                      join r in context.Roles on ur.RoleId equals r.Id
+                                      where ur.UserId == usuario.Id
+                                      select r.Name).ToListAsync();
+
+            respuesta.Status = true;
+            respuesta.Message.Add("Detalles del usuario recuperados.");
+            respuesta.Response = usuarioDTO;
+
+            return respuesta;
         }
 
         [HttpPost("login")]
@@ -92,7 +122,7 @@ namespace VeTLink.Controllers
 
                 var personaDto = mapper.Map<DetallePersonaDTO>(persona);
 
-                var token = GenerateJwtToken(user);
+                var token = GenerateJwtTokenAsync(user);
                 respuesta.Status = true;
                 respuesta.Message.Add("Login correcto.");
                 respuesta.Response = new
@@ -146,7 +176,7 @@ namespace VeTLink.Controllers
                 await userManager.AddToRoleAsync(user, "User");
             }
 
-            var token = GenerateJwtToken(user);
+            var token = GenerateJwtTokenAsync(user);
             return Ok(new { Token = token });
         }
 
@@ -212,7 +242,7 @@ namespace VeTLink.Controllers
                 }
 
                 // Generar un nuevo JWT
-                var token = GenerateJwtToken(user);
+                var token = GenerateJwtTokenAsync(user);
 
                 // Retornar respuesta
                 respuesta.Status = true;
@@ -229,18 +259,25 @@ namespace VeTLink.Controllers
             }
         }
 
-        private string GenerateJwtToken(IdentityUser user)
+        private async Task<string> GenerateJwtTokenAsync(IdentityUser user)
         {
             var jwtSettings = config.GetSection("Jwt");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            var usuario = await userManager.FindByEmailAsync(user.Email!);
+            var roles = await userManager.GetRolesAsync(usuario!);
+            foreach (var rol in roles)
+            {
+                claims.Add(new Claim("Roles", rol));
+            }
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],

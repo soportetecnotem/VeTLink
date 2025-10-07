@@ -105,9 +105,7 @@ namespace VeTLink.Utilidades
 
             // Clinica
             CreateMap<RegistroClinicaDTO, Clinica>()
-                .ForMember(dto => dto.Direccion, config => config.MapFrom(ent => ent.Direccion))
-                .ForMember(dto => dto.Email, config => config.MapFrom(ent => ent.EmailClinica))
-                .ForMember(dto => dto.SuscripcionId, config => config.MapFrom(ent => ent.SuscripcionId));
+               .ForMember(dto => dto.SuscripcionId, config => config.MapFrom(ent => ent.SuscripcionId));
             
             CreateMap<Clinica, ClinicaDTO>().ReverseMap();
 
@@ -128,8 +126,7 @@ namespace VeTLink.Utilidades
             CreateMap<RegistroClinicaDTO, Veterinario>()
                 .ForMember(dest => dest.CedulaProfesional, opt => opt.MapFrom(src => src.CedulaProfesional))
                 .ForMember(dest => dest.Horarios, opt => opt.MapFrom(src => src.Horarios))
-                .ForMember(dest => dest.Persona, opt => opt.Ignore())
-                .ForMember(dest => dest.ClinicasAsignadas, opt => opt.Ignore());
+                .ForMember(dest => dest.Persona, opt => opt.Ignore());
 
             CreateMap<Veterinario, VeterinarioDTO>().ReverseMap();
 
@@ -142,6 +139,14 @@ namespace VeTLink.Utilidades
                 .ForMember(dest => dest.EstadoSuscripcionNombre, opt => opt.MapFrom(src => src.EstadoSuscripcion != null ? src.EstadoSuscripcion.Descripcion : null))
                 .ForMember(dest => dest.PlanNombre, opt => opt.MapFrom(src => src.Plan != null ? src.Plan.NombrePlan : null))
                 .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Clinica != null ? src.Clinica.NombreClinica : null));
+
+            CreateMap<IdentityUser, UsuarioDTO>()
+               .ReverseMap();
+
+            CreateMap<CreateVeterinarioDTO, Veterinario>().ReverseMap(); ;
+            CreateMap<UpdateVeterinarioDTO, Veterinario>().ReverseMap(); ;
+            CreateMap<Veterinario, DetalleVeterinarioDTO>()
+                .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona)).ReverseMap();
         }
     }
 }

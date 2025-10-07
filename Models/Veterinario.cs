@@ -9,7 +9,7 @@
         public Guid? PersonaId { get; set; }
         public Persona? Persona { get; set; }
 
-        public ICollection<Clinica> ClinicasAsignadas { get; set; } = new List<Clinica>();
+        public ICollection<Sucursal> SucursalesAsignadas { get; set; } = new List<Sucursal>();
 
     }
 }
