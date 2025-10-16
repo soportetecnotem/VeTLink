@@ -113,6 +113,14 @@ namespace VeTLink.Utilidades
                 .ForMember(dto => dto.SuscripcionId, config => config.MapFrom(ent => ent.SuscripcionId))
                 .ReverseMap();
 
+            //Clinica/Sucursales
+            CreateMap<CreateSucursalDTO, Sucursal>();
+            CreateMap<UpdateSucursalDTO, Sucursal>();
+            CreateMap<Sucursal, DetalleSucursalDTO>()
+                .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Clinica.NombreClinica));
+            CreateMap<Sucursal, ListadoSucursalDTO>()
+                .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Clinica.NombreClinica));
+
             // Primer registro de la clinica con su admin clinica
             CreateMap<RegistroClinicaDTO, Persona>()
                 .ForMember(dto => dto.Nombre, config => config.MapFrom(ent => ent.Nombre))
@@ -129,6 +137,20 @@ namespace VeTLink.Utilidades
                 .ForMember(dest => dest.Persona, opt => opt.Ignore());
 
             CreateMap<Veterinario, VeterinarioDTO>().ReverseMap();
+
+            CreateMap<Veterinario, ListadoVeterinarioDTO>()
+                .ForMember(dest => dest.NombreCompleto,
+                    opt => opt.MapFrom(src =>
+                        $"{src.Persona!.Nombre} {src.Persona.PrimerApellido} {src.Persona.SegundoApellido ?? ""}".Trim()))
+                .ForMember(dest => dest.Sucursales,
+                    opt => opt.MapFrom(src => src.SucursalesAsignadas
+                        .Select(s => s.NombreSucursal ?? "Sin nombre").ToList()))
+                .ForMember(dest => dest.Clinicas,
+                    opt => opt.MapFrom(src => src.SucursalesAsignadas
+                        .Where(s => s.Clinica != null)
+                        .Select(s => s.Clinica!.NombreClinica)
+                        .Distinct()
+                        .ToList()));
 
             //Suscripcion
             CreateMap<CrearSuscripcionDTO, Suscripcion>()

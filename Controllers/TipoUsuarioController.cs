@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VeTLink.Data;
@@ -9,6 +10,7 @@ namespace VeTLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TipoUsuarioController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

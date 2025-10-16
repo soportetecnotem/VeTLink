@@ -13,6 +13,7 @@ namespace VeTLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class VeterinarioController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -25,7 +26,6 @@ namespace VeTLink.Controllers
         }
 
         [HttpPost("Nuevo")]
-        [Authorize]
         [EndpointSummary("Crea un nuevo veterinario")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Crear(CreateVeterinarioDTO dto)
         {
@@ -119,7 +119,6 @@ namespace VeTLink.Controllers
         }
 
         [HttpPut("Actualizar/{id:guid}")]
-        [Authorize]
         [EndpointSummary("Actualiza un veterinario existente con su persona y sucursal")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Editar(Guid id, UpdateVeterinarioDTO dto)
         {
@@ -128,7 +127,7 @@ namespace VeTLink.Controllers
             // 1️ Buscar el veterinario con sus relaciones
             var veterinario = await _context.Veterinarios
                 .Include(v => v.Persona)
-                    .ThenInclude(p => p.Direccion)
+                    .ThenInclude(p => p!.Direccion)
                 .Include(v => v.SucursalesAsignadas)
                     .ThenInclude(s => s.Clinica)
                 .FirstOrDefaultAsync(v => v.Id == id);
@@ -228,118 +227,155 @@ namespace VeTLink.Controllers
 
         // DETALLES
         [HttpGet("Detalles/{id:guid}")]
-        [EndpointSummary("Obtiene los detalles de un veterinario")]
+        [EndpointSummary("Obtiene los detalles de un veterinario con su persona, dirección y clínicas asignadas")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Detalles(Guid id)
         {
             var respuesta = new RespuestaObjetoDTO();
 
-            //var veterinario = await _context.Veterinarios
-            //    .Include(v => v.Persona).ThenInclude(p => p.Direccion)
-            //    .Include(v => v.ClinicasAsignadas)
-            //    .FirstOrDefaultAsync(v => v.Id == id);
+            var veterinario = await _context.Veterinarios
+                .Include(v => v.Persona)
+                    .ThenInclude(p => p!.Direccion)
+                .Include(v => v.SucursalesAsignadas)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            //if (veterinario == null)
-            //{
-            //    respuesta.Status = false;
-            //    respuesta.Message = new() { "Veterinario no encontrado." };
-            //    return NotFound(respuesta);
-            //}
+            if (veterinario == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "Veterinario no encontrado." };
+                return NotFound(respuesta);
+            }
 
-            //var detalle = _mapper.Map<DetalleVeterinarioDTO>(veterinario);
-            //respuesta.Status = true;
-            //respuesta.Response = detalle;
+            var detalle = _mapper.Map<DetalleVeterinarioDTO>(veterinario);
+
+            respuesta.Status = true;
+            respuesta.Response = detalle;
+            respuesta.Message = new() { "Detalles del veterinario obtenidos correctamente." };
+
             return Ok(respuesta);
         }
 
-        // GET: api/veterinario
         [HttpGet("Listado")]
-        [EndpointSummary("Obtiene todos los veterinarios")]
-        public async Task<ActionResult<RespuestaObjetoDTO>> GetAll()
+        [EndpointSummary("Obtiene el listado completo de veterinarios con su persona, sucursales y clínicas")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> Listado()
         {
             var respuesta = new RespuestaObjetoDTO();
 
-            //var veterinarios = await _context.Veterinarios
-            //    .Include(v => v.Persona).ThenInclude(p => p.Direccion)
-            //    .Include(v => v.Persona).ThenInclude(p => p.TipoUsuario)
-            //    .Include(v => v.ClinicasAsignadas)
-            //    .AsNoTracking()
-            //    .ToListAsync();
+            var veterinarios = await _context.Veterinarios
+                .Include(v => v.Persona)
+                    .ThenInclude(p => p!.Direccion)
+                .Include(v => v.SucursalesAsignadas)
+                    .ThenInclude(s => s.Clinica)
+                .AsNoTracking()
+                .ToListAsync();
 
-            //var listado = _mapper.Map<List<DetalleVeterinarioDTO>>(veterinarios);
+            if (!veterinarios.Any())
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No hay veterinarios registrados." };
+                return NotFound(respuesta);
+            }
 
-            //respuesta.Status = true;
-            //respuesta.Response = listado;
-            //respuesta.Message = new() { "Listado de veterinarios obtenido correctamente." };
+            var lista = _mapper.Map<List<ListadoVeterinarioDTO>>(veterinarios);
+
+            respuesta.Status = true;
+            respuesta.Response = lista;
+            respuesta.Message = new() { "Listado de veterinarios obtenido correctamente." };
+
             return Ok(respuesta);
         }
 
-        // GET: api/veterinario/clinica/5
-        [HttpGet("Clinica/{clinicaId:int}")]
-        [EndpointSummary("Obtiene todos los veterinarios de una clínica")]
-        public async Task<ActionResult<RespuestaObjetoDTO>> GetByClinica(int clinicaId)
+        [HttpGet("ListadoPorClinica/{clinicaId:int}")]
+        [EndpointSummary("Obtiene todos los veterinarios que pertenecen a una clínica específica")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ListadoPorClinica(int clinicaId)
         {
             var respuesta = new RespuestaObjetoDTO();
 
-            //var clinica = await _context.Clinicas
-            //    //.Include(c => c.sucu)
-            //    .FirstOrDefaultAsync(c => c.Id == clinicaId);
+            var veterinarios = await _context.Veterinarios
+                .Include(v => v.Persona)
+                    .ThenInclude(p => p!.Direccion)
+                .Include(v => v.SucursalesAsignadas)
+                    .ThenInclude(s => s.Clinica)
+                .Where(v => v.SucursalesAsignadas.Any(s => s.ClinicaId == clinicaId))
+                .AsNoTracking()
+                .ToListAsync();
 
-            //if (clinica == null)
-            //{
-            //    respuesta.Status = false;
-            //    respuesta.Message = new() { "Clínica no encontrada." };
-            //    return NotFound(respuesta);
-            //}
+            if (!veterinarios.Any())
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No hay veterinarios asignados a esta clínica." };
+                return NotFound(respuesta);
+            }
 
-            //var veterinarios = await _context.Veterinarios
-            //    .Include(v => v.Persona).ThenInclude(p => p.Direccion)
-            //    .Include(v => v.Persona).ThenInclude(p => p.TipoUsuario)
-            //    .Include(v => v.ClinicasAsignadas)
-            //    .Where(v => v.ClinicasAsignadas.Any(c => c.Id == clinicaId))
-            //    .AsNoTracking()
-            //    .ToListAsync();
+            var lista = _mapper.Map<List<ListadoVeterinarioDTO>>(veterinarios);
 
-            //var listado = _mapper.Map<List<DetalleVeterinarioDTO>>(veterinarios);
+            respuesta.Status = true;
+            respuesta.Response = lista;
+            respuesta.Message = new() { "Veterinarios de la clínica obtenidos correctamente." };
 
-            //respuesta.Status = true;
-            //respuesta.Response = listado;
-            //respuesta.Message = new() { $"Listado de veterinarios de la clínica {clinica.NombreClinica} obtenido correctamente." };
             return Ok(respuesta);
         }
 
         // ELIMINAR
         [HttpDelete("Eliminar/{id:guid}")]
-        [EndpointSummary("Elimina un veterinario, su persona y dirección")]
+        [EndpointSummary("Elimina un veterinario, su persona y dirección, solo si no tiene registros vinculados")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Eliminar(Guid id)
         {
             var respuesta = new RespuestaObjetoDTO();
 
-            //var veterinario = await _context.Veterinarios
-            //    .Include(v => v.Persona).ThenInclude(p => p.Direccion)
-            //    .FirstOrDefaultAsync(v => v.Id == id);
+            // Buscar el veterinario con todas sus relaciones necesarias
+            var veterinario = await _context.Veterinarios
+                .Include(v => v.Persona)
+                    .ThenInclude(p => p!.Direccion)
+                .Include(v => v.SucursalesAsignadas)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            //if (veterinario == null)
-            //{
-            //    respuesta.Status = false;
-            //    respuesta.Message = new() { "Veterinario no encontrado." };
-            //    return NotFound(respuesta);
-            //}
+            if (veterinario == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "Veterinario no encontrado." };
+                return NotFound(respuesta);
+            }
 
-            //if (veterinario.Persona?.Direccion != null)
-            //{
-            //    _context.Direcciones.Remove(veterinario.Persona.Direccion);
-            //}
+            //  1️ Verificar si está asignado a alguna sucursal
+            if (veterinario.SucursalesAsignadas != null && veterinario.SucursalesAsignadas.Any())
+            {
+                respuesta.Status = false;
+                respuesta.Message = new()
+        {
+            "No se puede eliminar el veterinario porque está asignado a una o más sucursales."
+        };
+                return BadRequest(respuesta);
+            }
 
-            //if (veterinario.Persona != null)
-            //{
-            //    _context.Personas.Remove(veterinario.Persona);
-            //}
+            //  2️ (Opcional) Verificar si tiene citas, tratamientos, o historiales
+            // Ejemplo si tuvieras tabla CitasVeterinario
+            /*
+            bool tieneCitas = await _context.Citas.AnyAsync(c => c.VeterinarioId == id);
+            if (tieneCitas)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new()
+                {
+                    "No se puede eliminar el veterinario porque tiene citas registradas."
+                };
+                return BadRequest(respuesta);
+            }
+            */
 
-            //_context.Veterinarios.Remove(veterinario);
-            //await _context.SaveChangesAsync();
+            //  3️ Eliminar registros relacionados (dirección y persona)
+            if (veterinario.Persona?.Direccion != null)
+                _context.Direcciones.Remove(veterinario.Persona.Direccion);
 
-            //respuesta.Status = true;
-            //respuesta.Message = new() { "Veterinario eliminado correctamente junto con su persona y dirección." };
+            if (veterinario.Persona != null)
+                _context.Personas.Remove(veterinario.Persona);
+
+            _context.Veterinarios.Remove(veterinario);
+            await _context.SaveChangesAsync();
+
+            //  4️ Respuesta final
+            respuesta.Status = true;
+            respuesta.Message = new() { "Veterinario eliminado correctamente junto con su persona y dirección." };
             return Ok(respuesta);
         }
     }

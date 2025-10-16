@@ -26,7 +26,6 @@ namespace VeTLink.Controllers
         IMapper mapper) : ControllerBase
     {
         [HttpPost("Nuevo")]
-        [Authorize]
         [EndpointSummary("Registrar nuevo usuario.")]
         public async Task<ActionResult<RespuestaGeneralDTO>> Register(RegisterDto model)
         {
@@ -42,6 +41,7 @@ namespace VeTLink.Controllers
             {
                 var persona = mapper.Map<Persona>(model);
                 persona.UsuarioId = user.Id;
+                persona.TipoUsuarioId = 3;
 
                 context.Personas.Add(persona);
                 await context.SaveChangesAsync();
@@ -66,7 +66,7 @@ namespace VeTLink.Controllers
         }
 
         [HttpGet("Detalles/{userName}")]
-        //[Authorize]
+        [Authorize]
         [EndpointSummary("Obtiene los detalles de un usuario por su UserName.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetUsuarioPorUserName(string userName)
         {
@@ -100,7 +100,9 @@ namespace VeTLink.Controllers
         [EndpointSummary("Obtiene token al ingresar las credenciales correctas")]
         public async Task<ActionResult<RespuestaObjetoDTO>> Login(LoginDto model)
         {
-            var respuesta = new RespuestaObjetoDTO
+            // "email": "priscilatafolla@gmail.com","password": "Abc123#." 
+
+        var respuesta = new RespuestaObjetoDTO
             {
                 Message = []
             };
@@ -127,7 +129,7 @@ namespace VeTLink.Controllers
                 respuesta.Message.Add("Login correcto.");
                 respuesta.Response = new
                 {
-                    Token = token,
+                    Token = token.Result.Token,
                     Usuario = personaDto
                 };
                 return respuesta;
@@ -259,7 +261,7 @@ namespace VeTLink.Controllers
             }
         }
 
-        private async Task<string> GenerateJwtTokenAsync(IdentityUser user)
+        private async Task<TokenDTO> GenerateJwtTokenAsync(IdentityUser user)
         {
             var jwtSettings = config.GetSection("Jwt");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
@@ -268,8 +270,7 @@ namespace VeTLink.Controllers
             var claims = new List<Claim>
             {
                 new("UserId", user.Id),
-                new(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new("Email", user.Email ?? "")
             };
 
             var usuario = await userManager.FindByEmailAsync(user.Email!);
@@ -278,16 +279,17 @@ namespace VeTLink.Controllers
             {
                 claims.Add(new Claim("Roles", rol));
             }
+            var expiracion = DateTime.UtcNow.AddDays(1);
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(4),
-                signingCredentials: creds
-            );
+            var TokenSeguridad = new JwtSecurityToken(issuer: null, audience: null,
+                           claims: claims, expires: expiracion, signingCredentials: creds);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var token = new JwtSecurityTokenHandler().WriteToken(TokenSeguridad);
+            return new TokenDTO
+            {
+                Token = token,
+                Expiracion = expiracion
+            };
         }
 
         private string MapIdentityError(IdentityError error)

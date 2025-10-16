@@ -10,6 +10,7 @@ namespace VeTLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RolesController : ControllerBase
     {
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -22,7 +23,6 @@ namespace VeTLink.Controllers
         }
 
         [HttpPost("Nuevo")]
-        //[Authorize]
         [EndpointSummary("Crea un Rol de Usuario")]
         public async Task<ActionResult<RespuestaGeneralDTO>> CrearRol([FromBody] CrearRolDTO dto)
         {
@@ -56,7 +56,6 @@ namespace VeTLink.Controllers
         }
 
         [HttpPut("Actualizar/{id}")]
-        [Authorize]
         [EndpointSummary("Actualiza el nombre de Rol de Usuario")]
         public async Task<ActionResult<RespuestaGeneralDTO>> EditarRol(string id, [FromBody] EditarRolDTO dto)
         {
@@ -94,7 +93,6 @@ namespace VeTLink.Controllers
 
         // GET: api/roles
         [HttpGet("Listado")]
-        [Authorize]
         [EndpointSummary("Obtiene los Roles de Usuario")]
         public async Task<ActionResult<RespuestaObjetoDTO>> ObtenerRoles()
         {
@@ -119,7 +117,6 @@ namespace VeTLink.Controllers
 
         // POST: api/roles/asignar
         [HttpPost("asignar-rol")]
-        [Authorize]
         [EndpointSummary("Asigna un rol a un Usuario")]
         public async Task<ActionResult<RespuestaObjetoDTO>> AsignarRolComoClaim(AsignarRolDTO dto)
         {
@@ -169,7 +166,6 @@ namespace VeTLink.Controllers
         }
 
         [HttpGet("Detalles/{id}")]
-        [Authorize]
         [EndpointSummary("Obtiene los detalles de un rol por su nombre.")]
         public async Task<ActionResult<RespuestaObjetoDTO>> GetRolPorNombre(string id)
         {
@@ -201,7 +197,6 @@ namespace VeTLink.Controllers
 
         //Eliminar rol a usuario
         [HttpPost("remover-rol")]
-        [Authorize]
         [EndpointSummary("Elimina un rol asignado a un Usuario")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarRolAUsuario(AsignarRolDTO dto)
         {
@@ -251,7 +246,6 @@ namespace VeTLink.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize]
         [EndpointSummary("Elimina un rol del sistema por Id")]
         public async Task<ActionResult<RespuestaObjetoDTO>> EliminarRol(string id)
         {
@@ -299,6 +293,7 @@ namespace VeTLink.Controllers
         }
 
         [HttpGet("api/test-roles")]
+        [AllowAnonymous]
         [EndpointSummary("obtiene un listado de roles de Usuario para realizar el test al endpoint")]
         public IActionResult TestRoles()
         {

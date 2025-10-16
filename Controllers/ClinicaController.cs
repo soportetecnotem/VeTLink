@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ namespace VeTLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ClinicaController(ApplicationDbContext context,
         UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IMapper mapper) : ControllerBase
     {
@@ -221,6 +223,159 @@ namespace VeTLink.Controllers
                 Status = true,
                 Message = new List<string> { "Clínica eliminada exitosamente" }
             };
+        }
+
+        // NUEVA SUCURSAL
+        [HttpPost("Sucursal/Nuevo")]
+        [EndpointSummary("Crea una nueva sucursal asociada a una clínica")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> CrearSucursal(CreateSucursalDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO();
+
+            var clinica = await context.Clinicas.FindAsync(dto.ClinicaId);
+            if (clinica == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "Clínica no encontrada." };
+                return NotFound(respuesta);
+            }
+
+            var sucursal = mapper.Map<Sucursal>(dto);
+            sucursal.ClinicaId = dto.ClinicaId;
+
+            context.Sucursales.Add(sucursal);
+            await context.SaveChangesAsync();
+
+            var detalle = mapper.Map<DetalleSucursalDTO>(sucursal);
+            detalle.NombreClinica = clinica.NombreClinica;
+
+            respuesta.Status = true;
+            respuesta.Response = detalle;
+            respuesta.Message = new() { "Sucursal creada correctamente." };
+            return Ok(respuesta);
+        }
+
+        // EDITAR SUCURSAL
+        [HttpPut("Sucursal/Actualizar/{id:int}")]
+        [EndpointSummary("Actualiza los datos de una sucursal existente")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> EditarSucursal(int id, UpdateSucursalDTO dto)
+        {
+            var respuesta = new RespuestaObjetoDTO();
+
+            var sucursal = await context.Sucursales
+                .Include(s => s.Direccion)
+                .Include(s => s.Clinica)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (sucursal == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "Sucursal no encontrada." };
+                return NotFound(respuesta);
+            }
+
+            // Actualizar datos principales
+            mapper.Map(dto, sucursal);
+
+            // Actualizar dirección si se proporciona
+            if (dto.Direccion != null)
+            {
+                if (sucursal.Direccion == null)
+                    sucursal.Direccion = mapper.Map<Direccion>(dto.Direccion);
+                else
+                    mapper.Map(dto.Direccion, sucursal.Direccion);
+            }
+
+            await context.SaveChangesAsync();
+
+            var detalle = mapper.Map<DetalleSucursalDTO>(sucursal);
+            detalle.NombreClinica = sucursal.Clinica?.NombreClinica;
+
+            respuesta.Status = true;
+            respuesta.Response = detalle;
+            respuesta.Message = new() { "Sucursal actualizada correctamente." };
+            return Ok(respuesta);
+        }
+
+        // DETALLES DE UNA SUCURSAL
+        [HttpGet("Sucursal/Detalles/{id:int}")]
+        [EndpointSummary("Obtiene los detalles completos de una sucursal")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> DetallesSucursal(int id)
+        {
+            var respuesta = new RespuestaObjetoDTO();
+
+            var sucursal = await context.Sucursales
+                .Include(s => s.Direccion)
+                .Include(s => s.Clinica)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (sucursal == null)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "Sucursal no encontrada." };
+                return NotFound(respuesta);
+            }
+
+            var detalle = mapper.Map<DetalleSucursalDTO>(sucursal);
+            detalle.NombreClinica = sucursal.Clinica?.NombreClinica;
+
+            respuesta.Status = true;
+            respuesta.Response = detalle;
+            return Ok(respuesta);
+        }
+
+        // LISTADO GENERAL DE SUCURSALES
+        [HttpGet("Sucursal/Listado")]
+        [EndpointSummary("Obtiene el listado de todas las sucursales con su clínica asociada")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ListadoSucursales()
+        {
+            var respuesta = new RespuestaObjetoDTO();
+
+            var sucursales = await context.Sucursales
+                .Include(s => s.Clinica)
+                .ToListAsync();
+
+            var listado = mapper.Map<List<ListadoSucursalDTO>>(sucursales);
+            foreach (var item in listado)
+            {
+                var clinica = sucursales.First(s => s.Id == item.Id).Clinica;
+                item.NombreClinica = clinica?.NombreClinica;
+            }
+
+            respuesta.Status = true;
+            respuesta.Response = listado;
+            return Ok(respuesta);
+        }
+
+        // LISTADO POR CLÍNICA
+        [HttpGet("Sucursal/ListadoPorClinica/{clinicaId:int}")]
+        [EndpointSummary("Obtiene el listado de sucursales que pertenecen a una clínica específica")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ListadoPorClinica(int clinicaId)
+        {
+            var respuesta = new RespuestaObjetoDTO();
+
+            var sucursales = await context.Sucursales
+                .Where(s => s.ClinicaId == clinicaId)
+                .Include(s => s.Clinica)
+                .ToListAsync();
+
+            if (!sucursales.Any())
+            {
+                respuesta.Status = false;
+                respuesta.Message = new() { "No se encontraron sucursales para la clínica especificada." };
+                return NotFound(respuesta);
+            }
+
+            var listado = mapper.Map<List<ListadoSucursalDTO>>(sucursales);
+            foreach (var item in listado)
+            {
+                var clinica = sucursales.First(s => s.Id == item.Id).Clinica;
+                item.NombreClinica = clinica?.NombreClinica;
+            }
+
+            respuesta.Status = true;
+            respuesta.Response = listado;
+            return Ok(respuesta);
         }
     }    
 }
