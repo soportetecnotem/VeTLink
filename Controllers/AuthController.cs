@@ -124,7 +124,9 @@ namespace VeTLink.Controllers
 
                 var personaDto = mapper.Map<DetallePersonaDTO>(persona);
 
-                var token = GenerateJwtTokenAsync(user);
+                //var token = GenerateJwtTokenAsync(user);
+                var token = ConstruirToken(user);
+                
                 respuesta.Status = true;
                 respuesta.Message.Add("Login correcto.");
                 respuesta.Response = new
@@ -292,6 +294,43 @@ namespace VeTLink.Controllers
             };
         }
 
+        private async Task<RespuestaAutenticacionDTO> ConstruirToken(
+            IdentityUser credencialesUsuarioDTO)
+        {
+            var claims = new List<Claim>
+            {
+                new("UserId", credencialesUsuarioDTO.Id),
+                new("Email", credencialesUsuarioDTO.Email!),
+                new("UserName",credencialesUsuarioDTO.UserName!)
+            };
+            var usuario = await userManager.FindByNameAsync(credencialesUsuarioDTO.UserName!);
+            var roles = await userManager.GetRolesAsync(usuario!);
+            foreach (var rol in roles)
+            {
+                claims.Add(new Claim("Roles", rol));
+            }
+
+            //var claimsDB = await userManager.GetClaimsAsync(usuario!);
+
+            //claims.AddRange(claimsDB);
+
+            var llave = new SymmetricSecurityKey(Encoding.UTF8
+                .GetBytes(config["LlaveJWT"]!));
+            var credemciales = new SigningCredentials(llave, SecurityAlgorithms.HmacSha256);
+
+            var expiracion = DateTime.UtcNow.AddDays(10);
+
+            var TokenSeguridad = new JwtSecurityToken(issuer: null, audience: null,
+                claims: claims, expires: expiracion, signingCredentials: credemciales);
+
+            var token = new JwtSecurityTokenHandler().WriteToken(TokenSeguridad);
+
+            return new RespuestaAutenticacionDTO
+            {
+                Token = token,
+                Expiracion = expiracion
+            };
+        }
         private string MapIdentityError(IdentityError error)
         {
             switch (error.Code)
