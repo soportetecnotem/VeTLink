@@ -228,7 +228,7 @@ namespace VeTLink.Controllers
         // NUEVA SUCURSAL
         [HttpPost("Sucursal/Nuevo")]
         [EndpointSummary("Crea una nueva sucursal asociada a una clínica")]
-        public async Task<ActionResult<RespuestaObjetoDTO>> CrearSucursal(CreateSucursalDTO dto)
+        public async Task<ActionResult<RespuestaObjetoDTO>> CrearSucursal(CrearSucursalDTO dto)
         {
             var respuesta = new RespuestaObjetoDTO();
 

@@ -5,7 +5,7 @@ namespace VeTLink.DTOs
     public class DetalleClinicaDTO: ClinicaDTO
     {
         public int Id { get; set; }
-        public ICollection<Sucursal> Sucursales { get; set; } = new List<Sucursal>();
+        public ICollection<UpdateSucursalDTO> Sucursales { get; set; } = new List<UpdateSucursalDTO>();
 
     }
 }

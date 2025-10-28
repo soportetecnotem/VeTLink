@@ -1,6 +1,6 @@
 ﻿namespace VeTLink.DTOs
 {
-    public class DetalleSucursalDTO : BaseSucursalDTO
+    public class DetalleSucursalDTO : SucursalDTO
     {
         public int Id { get; set; }
         public int? ClinicaId { get; set; }
