@@ -1,8 +1,7 @@
 ﻿namespace VeTLink.DTOs
 {
-    public class UpdateSucursalDTO : SucursalDTO
+    public class UpdateSucursalDTO
     {
-        public int Id { get; set; }
-        public DireccionDTO? Direccion { get; set; }
+            public DireccionDTO? Direccion { get; set; }
     }
 }

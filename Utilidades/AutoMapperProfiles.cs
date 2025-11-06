@@ -109,18 +109,22 @@ namespace VeTLink.Utilidades
             
             CreateMap<Clinica, ClinicaDTO>().ReverseMap();
 
+            // Clinica DetalleClinicaDTO
             CreateMap<Clinica, DetalleClinicaDTO>()
-            .ForMember(dto => dto.Sucursales, config => config.MapFrom(ent => ent.Sucursales))
-            .ReverseMap();
+                .ForMember(dto => dto.Suscripcion, config => config.MapFrom(ent => ent.Suscripcion))
+                .ForMember(dto => dto.Sucursales, config => config.MapFrom(ent => ent.Sucursales))
+                .ReverseMap();
 
             //Clinica/Sucursales
             CreateMap<Sucursal, SucursalDTO>().ReverseMap();
-            CreateMap<CrearSucursalDTO, Sucursal>();
-            CreateMap<UpdateSucursalDTO, Sucursal>();
+            CreateMap<CrearSucursalDTO, Sucursal>().ReverseMap();
+            CreateMap<Sucursal, UpdateSucursalDTO>()
+                .ForMember(dto => dto.Direccion, config => config.MapFrom(ent => ent.Direccion))
+                .ReverseMap();
             CreateMap<Sucursal, DetalleSucursalDTO>()
-                .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Clinica!.NombreClinica));
-            CreateMap<Sucursal, ListadoSucursalDTO>()
-                .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Clinica!.NombreClinica));
+                .ForMember(dto => dto.Direccion, config => config.MapFrom(ent => ent.Direccion))
+                .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Clinica!.NombreClinica))
+                .ReverseMap();
 
             // Primer registro de la clinica con su admin clinica
             CreateMap<RegistroClinicaDTO, Persona>()

@@ -3,8 +3,7 @@
 namespace VeTLink.DTOs
 {
     public class ClinicaDTO
-    {
-        
+    {        
         public string NombreClinica { get; set; } = null!;
         public string? SitioWeb { get; set; }
         public string? Logo { get; set; }

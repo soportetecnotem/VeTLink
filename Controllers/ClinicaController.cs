@@ -52,6 +52,53 @@ namespace VeTLink.Controllers
             }
         }
 
+        [HttpGet("Clinica/ListadoPaginado")]
+        [EndpointSummary("Obtiene listado paginado de clínicas")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> GetClinicasPaginado(int NumPagina = 1, int RegXPag = 10)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            try
+            {
+                // Calcular saltos
+                var skip = (NumPagina - 1) * RegXPag;
+
+                var query = context.Clinicas
+                    .Include(c => c.Suscripcion)
+                    .Include(c => c.Sucursales)
+                    .AsNoTracking();
+
+                var totalRegistros = await query.CountAsync();
+                var totalPaginas = (int)Math.Ceiling((double)totalRegistros / RegXPag);
+
+                var clinicas = await query
+                    .Skip(skip)
+                    .Take(RegXPag)
+                    .ToListAsync();
+
+                var clinicasDTO = mapper.Map<List<DetalleClinicaDTO>>(clinicas);
+
+                respuesta.Status = true;
+                respuesta.Message.Add($"{clinicasDTO.Count} de {totalRegistros} clínicas encontradas.");
+                respuesta.Response = new
+                {
+                    TotalRegistros = totalRegistros,
+                    PaginaActual = NumPagina,
+                    TamanoPagina = RegXPag,
+                    TotalPaginas = totalPaginas,
+                    Listado = clinicasDTO
+                };
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message = new List<string> { "Error al obtener clínicas.", ex.Message };
+                return StatusCode(StatusCodes.Status500InternalServerError, respuesta);
+            }
+        }
+
         // Detalles
         [HttpGet("Detalles/{id:int}")]
         [EndpointSummary("Obtiene los detalles de una clínica por ID")]
@@ -106,7 +153,7 @@ namespace VeTLink.Controllers
         // Actualizar
         [HttpPut("Actualizar/{id:int}")]
         [EndpointSummary("Actualiza la información de una clínica y sus sucursales")]
-        public async Task<ActionResult<RespuestaObjetoDTO>> EditarClinica(int id, [FromBody] DetalleClinicaDTO dto)
+        public async Task<ActionResult<RespuestaObjetoDTO>> EditarClinica(int id, [FromBody] UpdateClinica dto)
         {
             var clinica = await context.Clinicas
                 .Include(c => c.Sucursales)
@@ -333,9 +380,10 @@ namespace VeTLink.Controllers
 
             var sucursales = await context.Sucursales
                 .Include(s => s.Clinica)
+                .Include (s => s.Direccion)
                 .ToListAsync();
 
-            var listado = mapper.Map<List<ListadoSucursalDTO>>(sucursales);
+            var listado = mapper.Map<List<DetalleSucursalDTO>>(sucursales);
             foreach (var item in listado)
             {
                 var clinica = sucursales.First(s => s.Id == item.Id).Clinica;
@@ -344,6 +392,48 @@ namespace VeTLink.Controllers
 
             respuesta.Status = true;
             respuesta.Response = listado;
+            return Ok(respuesta);
+        }
+
+        [HttpGet("Sucursal/ListadoPaginado")]
+        [EndpointSummary("Obtiene listado paginado de todas las sucursales con su clínica asociada")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ListadoSucursalesPaginado(int NumPagina = 1, int RegXPag = 10)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            // Calcular saltos
+            var skip = (NumPagina - 1) * RegXPag;
+
+            var query = context.Sucursales
+                .Include(s => s.Clinica)
+                .Include(s => s.Direccion);
+
+            var totalRegistros = await query.CountAsync();
+            var totalPaginas = (int)Math.Ceiling((double)totalRegistros / RegXPag);
+
+            var sucursales = await query
+                .Skip(skip)
+                .Take(RegXPag)
+                .ToListAsync();
+
+            var listado = mapper.Map<List<DetalleSucursalDTO>>(sucursales);
+            foreach (var item in listado)
+            {
+                var clinica = sucursales.First(s => s.Id == item.Id).Clinica;
+                item.NombreClinica = clinica?.NombreClinica;
+            }
+
+            respuesta.Status = true;
+            respuesta.Message.Add($"{listado.Count} de {totalRegistros} sucursales encontradas.");
+            respuesta.Response = new
+            {
+                TotalRegistros = totalRegistros,
+                PaginaActual = NumPagina,
+                TamanoPagina = RegXPag,
+                TotalPaginas = totalPaginas,
+                Listado = listado
+            };
+
             return Ok(respuesta);
         }
 
@@ -366,7 +456,7 @@ namespace VeTLink.Controllers
                 return NotFound(respuesta);
             }
 
-            var listado = mapper.Map<List<ListadoSucursalDTO>>(sucursales);
+            var listado = mapper.Map<List<DetalleSucursalDTO>>(sucursales);
             foreach (var item in listado)
             {
                 var clinica = sucursales.First(s => s.Id == item.Id).Clinica;
@@ -375,6 +465,56 @@ namespace VeTLink.Controllers
 
             respuesta.Status = true;
             respuesta.Response = listado;
+            return Ok(respuesta);
+        }
+        [HttpGet("Sucursal/ListadoPorClinicaPaginado/{clinicaId:int}")]
+        [EndpointSummary("Obtiene listado paginado de sucursales que pertenecen a una clínica específica")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ListadoPorClinicaPaginado(int clinicaId, int NumPagina = 1, int RegXPag = 10)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            // Calcular saltos
+            var skip = (NumPagina - 1) * RegXPag;
+
+            var query = context.Sucursales
+                .Where(s => s.ClinicaId == clinicaId)
+                .Include(s => s.Clinica)
+                .Include(s => s.Direccion);
+
+            var totalRegistros = await query.CountAsync();
+
+            if (totalRegistros == 0)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add("No se encontraron sucursales para la clínica especificada.");
+                return NotFound(respuesta);
+            }
+
+            var totalPaginas = (int)Math.Ceiling((double)totalRegistros / RegXPag);
+
+            var sucursales = await query
+                .Skip(skip)
+                .Take(RegXPag)
+                .ToListAsync();
+
+            var listado = mapper.Map<List<DetalleSucursalDTO>>(sucursales);
+            foreach (var item in listado)
+            {
+                var clinica = sucursales.First(s => s.Id == item.Id).Clinica;
+                item.NombreClinica = clinica?.NombreClinica;
+            }
+
+            respuesta.Status = true;
+            respuesta.Message.Add($"{listado.Count} de {totalRegistros} sucursales para la clínica especificada.");
+            respuesta.Response = new
+            {
+                TotalRegistros = totalRegistros,
+                PaginaActual = NumPagina,
+                TamanoPagina = RegXPag,
+                TotalPaginas = totalPaginas,
+                Listado = listado
+            };
+
             return Ok(respuesta);
         }
     }    
