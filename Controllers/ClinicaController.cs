@@ -14,6 +14,7 @@ namespace VeTLink.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    //Prueba de cambio para git
     public class ClinicaController(ApplicationDbContext context,
         UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IMapper mapper) : ControllerBase
     {
