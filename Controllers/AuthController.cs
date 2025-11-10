@@ -12,6 +12,7 @@ using VeTLink.Data;
 using VeTLink.DTOs;
 using VeTLink.DTOs.Responses;
 using VeTLink.Models;
+using VeTLink.Services;
 
 namespace VeTLink.Controllers
 {
@@ -142,6 +143,78 @@ namespace VeTLink.Controllers
                 return Unauthorized(respuesta);
             }
 
+        }
+
+        [HttpPost("forgotpassword")]
+        [EndpointSummary("Genera un token para restablecer la contraseña del usuario y lo envía por correo")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ForgotPassword(ForgotPasswordDto model, [FromServices] IEmailService emailService)
+        {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                respuesta.Message.Add("El usuario no se encuentra registrado.");
+                return NotFound(respuesta);
+            }
+
+            // Generar token
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Crear link con el token
+            var resetLink = Url.Action("ResetPassword", "Auth",
+                new { token, email = model.Email }, Request.Scheme);
+
+            // Construir mensaje HTML
+            var mensajeHtml = $@"
+        <h2>Recuperación de contraseña</h2>
+        <p>Hola, {user.UserName}:</p>
+        <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
+        <p>Da clic en el siguiente enlace para continuar:</p>
+        <p><a href='{resetLink}' target='_blank'>Restablecer contraseña</a></p>
+        <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+        <hr>
+        <p style='font-size:12px;color:#888;'>Este enlace es válido por tiempo limitado.</p>
+    ";
+
+            // Enviar correo
+            await emailService.SendEmailAsync(model.Email, "Recupera tu contraseña", mensajeHtml);
+
+            respuesta.Status = true;
+            respuesta.Message.Add("Se ha enviado un correo con el enlace para restablecer tu contraseña.");
+            return Ok(respuesta);
+        }
+
+        [HttpPost("resetpassword")]
+        [EndpointSummary("Permite al usuario cambiar su contraseña usando un token válido")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ResetPassword(ResetPasswordDto model)
+        {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                respuesta.Message.Add("Usuario no encontrado.");
+                return NotFound(respuesta);
+            }
+
+            var result = await userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                respuesta.Message.AddRange(result.Errors.Select(e => e.Description));
+                return BadRequest(respuesta);
+            }
+
+            respuesta.Status = true;
+            respuesta.Message.Add("La contraseña se ha restablecido correctamente.");
+            return Ok(respuesta);
         }
 
         [HttpPost("PrimerUsuario")]

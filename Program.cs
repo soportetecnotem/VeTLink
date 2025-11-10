@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using VeTLink.Data;
 using VeTLink.Models;
+using VeTLink.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,6 +112,10 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         return new BadRequestObjectResult(customResponse);
     };
 });
+
+//Configuracion de correo
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 var app = builder.Build();
 
