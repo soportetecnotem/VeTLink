@@ -170,10 +170,17 @@ namespace VeTLink.Utilidades
             CreateMap<IdentityUser, UsuarioDTO>()
                .ReverseMap();
 
-            CreateMap<CreateVeterinarioDTO, Veterinario>().ReverseMap(); ;
-            CreateMap<UpdateVeterinarioDTO, Veterinario>().ReverseMap(); ;
+            CreateMap<CreateVeterinarioDTO, Veterinario>().ReverseMap();
+            CreateMap<UpdateVeterinarioDTO, Veterinario>().ReverseMap();
             CreateMap<Veterinario, DetalleVeterinarioDTO>()
                 .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona)).ReverseMap();
+
+            //Planes modulos
+
+            CreateMap<Plan, PlanDetalleDTO>().ReverseMap(); ;
+            CreateMap<Modulo, ModuloDTO>().ReverseMap(); ;
+            CreateMap<PlanCrearDTO, Plan>().ReverseMap(); ;
+            CreateMap<PlanActualizarDTO, Plan>().ReverseMap(); ;
         }
     }
 }
