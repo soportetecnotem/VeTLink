@@ -16,23 +16,35 @@ namespace VeTLink.Services
 
         public async Task SendEmailAsync(string toEmail, string subject, string htmlMessage)
         {
-            using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
+            try
             {
-                Credentials = new NetworkCredential(_smtpSettings.UserName, _smtpSettings.Password),
-                EnableSsl = _smtpSettings.EnableSsl
-            };
+                using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
+                {
+                    Credentials = new NetworkCredential(_smtpSettings.UserName, _smtpSettings.Password),
+                    EnableSsl = _smtpSettings.EnableSsl,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Timeout = 20000 // 20 segundos
+                };
 
-            var mailMessage = new MailMessage
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(_smtpSettings.From),
+                    Subject = subject,
+                    Body = htmlMessage,
+                    IsBodyHtml = true
+                };
+
+                mailMessage.To.Add(toEmail);
+
+                await client.SendMailAsync(mailMessage);
+            }
+            catch (SmtpException ex)
             {
-                From = new MailAddress(_smtpSettings.From),
-                Subject = subject,
-                Body = htmlMessage,
-                IsBodyHtml = true
-            };
-
-            mailMessage.To.Add(toEmail);
-
-            await client.SendMailAsync(mailMessage);
+                throw new InvalidOperationException(
+                    $"Error al enviar email. StatusCode: {ex.StatusCode}, Mensaje: {ex.Message}",
+                    ex);
+            }
         }
     }
 }
