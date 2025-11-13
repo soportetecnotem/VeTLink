@@ -164,9 +164,12 @@ namespace VeTLink.Controllers
             // Generar token
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
-            // Crear link con el token
-            var resetLink = Url.Action("ResetPassword", "Auth",
-                new { token, email = model.Email }, Request.Scheme);
+            // Codificar el token y email para URL
+            var encodedToken = Uri.EscapeDataString(token);
+            var encodedEmail = Uri.EscapeDataString(model.Email);
+
+            // Construir link hacia el frontend con parámetros en query string
+            var resetLink = $"https://vetlink.pages.dev/auth/resetPassword?token={encodedToken}&email={encodedEmail}";
 
             // Construir mensaje HTML
             var mensajeHtml = $@"
