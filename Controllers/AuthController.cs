@@ -203,7 +203,7 @@ namespace VeTLink.Controllers
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                respuesta.Message.Add("Usuario no encontrado.");
+                respuesta.Message.Add("Correo no encontrado.");
                 return NotFound(respuesta);
             }
 
