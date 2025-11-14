@@ -157,7 +157,7 @@ namespace VeTLink.Controllers
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                respuesta.Message.Add("El usuario no se encuentra registrado.");
+                respuesta.Message.Add("El correo no se encuentra registrado.");
                 return NotFound(respuesta);
             }
 
