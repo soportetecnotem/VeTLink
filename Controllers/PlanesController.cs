@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using VeTLink.Data;
-using VeTLink.DTOs;
+using VeTLink.DTOs.Modulo;
+using VeTLink.DTOs.Plan;
 using VeTLink.DTOs.Responses;
 using VeTLink.Models;
 

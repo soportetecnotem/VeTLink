@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Numerics;
 using VeTLink.Data;
-using VeTLink.DTOs;
+using VeTLink.DTOs.Catalogo;
 using VeTLink.DTOs.Responses;
 using VeTLink.Models;
 

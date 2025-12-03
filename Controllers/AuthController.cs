@@ -9,8 +9,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using VeTLink.Data;
-using VeTLink.DTOs;
+using VeTLink.DTOs.Persona;
 using VeTLink.DTOs.Responses;
+using VeTLink.DTOs.Usuario;
 using VeTLink.Models;
 using VeTLink.Services;
 
@@ -166,7 +167,8 @@ namespace VeTLink.Controllers
 
             // Codificar el token y email para URL
             var encodedToken = Uri.EscapeDataString(token);
-            var encodedEmail = Uri.EscapeDataString(model.Email);
+            //var encodedEmail = Uri.EscapeDataString(model.Email);
+            var encodedEmail = model.Email;
 
             // Construir link hacia el frontend con parámetros en query string
             var resetLink = $"https://vetlink.pages.dev/auth/resetPassword?token={encodedToken}&email={encodedEmail}";

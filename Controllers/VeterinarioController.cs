@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VeTLink.Data;
-using VeTLink.DTOs;
 using VeTLink.DTOs.Responses;
+using VeTLink.DTOs.Veterinario;
 using VeTLink.Models;
 
 namespace VeTLink.Controllers

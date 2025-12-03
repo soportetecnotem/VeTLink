@@ -1,6 +1,16 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
-using VeTLink.DTOs;
+using VeTLink.DTOs.Catalogo;
+using VeTLink.DTOs.Clinica;
+using VeTLink.DTOs.Consulta;
+using VeTLink.DTOs.Direccion;
+using VeTLink.DTOs.Modulo;
+using VeTLink.DTOs.Persona;
+using VeTLink.DTOs.Plan;
+using VeTLink.DTOs.Sucursal;
+using VeTLink.DTOs.Suscripcion;
+using VeTLink.DTOs.Usuario;
+using VeTLink.DTOs.Veterinario;
 using VeTLink.Models;
 
 namespace VeTLink.Utilidades

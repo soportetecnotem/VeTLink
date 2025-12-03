@@ -4,8 +4,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VeTLink.Data;
-using VeTLink.DTOs;
+using VeTLink.DTOs.Clinica;
+using VeTLink.DTOs.Persona;
 using VeTLink.DTOs.Responses;
+using VeTLink.DTOs.Suscripcion;
+using VeTLink.DTOs.Veterinario;
 using VeTLink.Models;
 
 namespace VeTLink.Controllers
