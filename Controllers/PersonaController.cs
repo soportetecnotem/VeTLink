@@ -125,9 +125,9 @@ namespace VeTLink.Controllers
         }
 
         // ACTUALIZAR
-        [HttpPut("Editar/{id:guid}")]
+        [HttpPut("Actualizar/{id:guid}")]
         [EndpointSummary("Actualiza una persona existente")]
-        public async Task<ActionResult<RespuestaObjetoDTO>> Update(Guid id, CreatePersonaDTO dto)
+        public async Task<ActionResult<RespuestaObjetoDTO>> Update(Guid id, DetallePersonaDTO dto)
         {
             var respuesta = new RespuestaObjetoDTO();
 

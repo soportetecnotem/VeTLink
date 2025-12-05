@@ -12,6 +12,7 @@ namespace VeTLink.Models
         public DateTime? FechaNacimiento { get; set; }
         public int? Edad { get; set; }
         public int? NumeroIdentificacion { get; set; }
+        public string? Telefono { get; set; }
         public string? Imagen { get; set; }
 
         public string UsuarioId { get; set; } = null!;

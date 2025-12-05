@@ -13,7 +13,7 @@ namespace VeTLink.DTOs.Consulta
         public MascotaDTO? DatosMascota { get; set; }
 
         // Datos del dueño (requerido si se crea nueva mascota)
-        public DuenoDTO? DatosDueno { get; set; }
+        public DetalleDuenoDTO? DatosDueno { get; set; }
 
         public DateTime? FechaConsulta { get; set; }
 

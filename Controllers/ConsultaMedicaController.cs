@@ -114,11 +114,10 @@ namespace VeTLink.Controllers
                     // 4.1 Procesar dueño (existente o nuevo)
                     Guid duenoId;
 
-                    if (dto.DatosDueno.DuenoId.HasValue && dto.DatosDueno.DuenoId.Value != Guid.Empty)
+                    if (dto.DatosDueno.Id != Guid.Empty)
                     {
                         // Validar que el dueño existe
-                        var duenoExistente = await _context.Duenos
-                            .FindAsync(dto.DatosDueno.DuenoId.Value);
+                        var duenoExistente = await _context.Duenos.FindAsync(dto.DatosDueno.Id);
 
                         if (duenoExistente == null)
                         {

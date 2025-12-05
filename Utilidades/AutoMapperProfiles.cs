@@ -4,6 +4,8 @@ using VeTLink.DTOs.Catalogo;
 using VeTLink.DTOs.Clinica;
 using VeTLink.DTOs.Consulta;
 using VeTLink.DTOs.Direccion;
+using VeTLink.DTOs.Dueno;
+using VeTLink.DTOs.Mascota;
 using VeTLink.DTOs.Modulo;
 using VeTLink.DTOs.Persona;
 using VeTLink.DTOs.Plan;
@@ -27,7 +29,7 @@ namespace VeTLink.Utilidades
             CreateMap<Persona, DetallePersonaDTO>()
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Usuario.Email))
                 .ForMember(dest => dest.TipoUsuarioNombre, opt => opt.MapFrom(src => src.TipoUsuario != null ? src.TipoUsuario.Nombre : null))
-                .ForMember(dest => dest.DireccionDTO, opt => opt.MapFrom(src => src.Direccion));
+                .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Direccion));
 
             // CreatePersonaDTO  Persona
             CreateMap<CreatePersonaDTO, Persona>()
@@ -190,7 +192,34 @@ namespace VeTLink.Utilidades
             CreateMap<Plan, PlanDetalleDTO>().ReverseMap(); ;
             CreateMap<Modulo, ModuloDTO>().ReverseMap(); ;
             CreateMap<PlanCrearDTO, Plan>().ReverseMap(); ;
-            CreateMap<PlanActualizarDTO, Plan>().ReverseMap(); ;
+            CreateMap<PlanActualizarDTO, Plan>().ReverseMap();
+
+            //Consulta medica
+            CreateMap<ConsultaMedicaDTO, ConsultaMedica>();
+
+            CreateMap<ConsultaMedica, DetallesConsultaMedicaDTO>()
+               .ForMember(dest => dest.NombreVeterinario, opt => opt.MapFrom(src =>
+                    src.Veterinario != null && src.Veterinario.Persona != null
+                        ? $"{src.Veterinario.Persona.Nombre} {src.Veterinario.Persona.PrimerApellido}"
+                        : null))
+                .ForMember(dest => dest.CedulaVeterinario, opt => opt.MapFrom(src => src.Veterinario != null ? src.Veterinario.CedulaProfesional : null))
+                .ForMember(dest => dest.TipoServicioNombre, opt => opt.MapFrom(src => src.TipoServicio != null ? src.TipoServicio.Servicio : null));
+
+            // Mapeo de Dueno a DuenoDetalleDTO
+            CreateMap<Dueno, DetalleDuenoDTO>()               
+                .ForMember(dest => dest.Genero, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.Genero : null))
+                .ForMember(dest => dest.FechaNacimiento, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.FechaNacimiento : null))
+                .ForMember(dest => dest.NumeroIdentificacion, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.NumeroIdentificacion : null))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Persona != null && src.Persona.Usuario != null ? src.Persona.Usuario.Email : null))
+                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => (string?)null)) // El teléfono no está en el modelo actual
+                .ForMember(dest => dest.Imagen, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.Imagen : null))
+                .ForMember(dest => dest.ClinicaId, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.ClinicaId : null))
+                .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Persona != null && src.Persona.Clinica != null ? src.Persona.Clinica.NombreClinica : null))
+                .ForMember(dest => dest.Mascotas, opt => opt.MapFrom(src => src.Mascotas));
+
+            // Mapeo de Mascota a MascotaResumenDTO
+            CreateMap<Mascota, MascotaDTO>();
+
         }
     }
 }

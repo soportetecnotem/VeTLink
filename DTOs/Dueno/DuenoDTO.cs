@@ -4,10 +4,7 @@ using VeTLink.DTOs.Direccion;
 namespace VeTLink.DTOs.Dueno
 {
     public class DuenoDTO
-    {
-        // ID de dueño existente (opcional)
-        public Guid? DuenoId { get; set; }
-
+    {        
         [Required(ErrorMessage = "El nombre del dueño es requerido.")]
         [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
         public string Nombre { get; set; } = null!;
