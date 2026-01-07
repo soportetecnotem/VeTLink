@@ -7,6 +7,7 @@ namespace VeTLink.DTOs.Persona
         public Guid Id { get; set; } 
         public int? TipoUsuarioId { get; set; }
         public string? TipoUsuarioNombre { get; set; }
+        public string? Email { get; set; }
         public DetalleDireccionDTO? Direccion { get; set; }
     }
 }

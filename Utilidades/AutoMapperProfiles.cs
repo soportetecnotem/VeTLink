@@ -1,17 +1,29 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using VeTLink.DTOs.Alergia;
+using VeTLink.DTOs.Bano;
+using VeTLink.DTOs.Carnet;
 using VeTLink.DTOs.Catalogo;
 using VeTLink.DTOs.Clinica;
 using VeTLink.DTOs.Consulta;
+using VeTLink.DTOs.Desparasitacion;
+using VeTLink.DTOs.Diagnostico;
 using VeTLink.DTOs.Direccion;
 using VeTLink.DTOs.Dueno;
+using VeTLink.DTOs.Enfermedad;
+using VeTLink.DTOs.Exploracion;
+using VeTLink.DTOs.HistorialMedico;
+using VeTLink.DTOs.HistorialReproductivo;
 using VeTLink.DTOs.Mascota;
 using VeTLink.DTOs.Modulo;
 using VeTLink.DTOs.Persona;
 using VeTLink.DTOs.Plan;
+using VeTLink.DTOs.Profilaxis;
+using VeTLink.DTOs.Sintoma;
 using VeTLink.DTOs.Sucursal;
 using VeTLink.DTOs.Suscripcion;
 using VeTLink.DTOs.Usuario;
+using VeTLink.DTOs.Vacuna;
 using VeTLink.DTOs.Veterinario;
 using VeTLink.Models;
 
@@ -23,7 +35,7 @@ namespace VeTLink.Utilidades
         {
             // Persona PersonaDto
             CreateMap<Persona, PersonaDTO>()
-            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Usuario.Email)).ReverseMap();
+               .ReverseMap();
 
             // Persona DetallePersonaDTO
             CreateMap<Persona, DetallePersonaDTO>()
@@ -111,6 +123,21 @@ namespace VeTLink.Utilidades
             CreateMap<EstadoSuscripcion, CatalogoDTO>().ReverseMap();
             CreateMap<EstadoSuscripcion, DetalleCatalogoDTO>().ReverseMap();
 
+            // NUEVOS MAPEOS - Enfermedad y Alergia
+            CreateMap<Enfermedad, CatalogoDTO>()
+                .ForMember(dto => dto.Descripcion, config => config.MapFrom(ent => ent.Nombre))
+                .ReverseMap();
+            CreateMap<Enfermedad, DetalleCatalogoDTO>()
+                .ForMember(dto => dto.Descripcion, config => config.MapFrom(ent => ent.Nombre))
+                .ReverseMap();
+
+            CreateMap<Alergia, CatalogoDTO>()
+                .ForMember(dto => dto.Descripcion, config => config.MapFrom(ent => ent.Sustancia))
+                .ReverseMap();
+            CreateMap<Alergia, DetalleCatalogoDTO>()
+                .ForMember(dto => dto.Descripcion, config => config.MapFrom(ent => ent.Sustancia))
+                .ReverseMap();
+
             // Direccion
             CreateMap<DireccionDTO, Direccion>().ReverseMap();
             CreateMap<DetalleDireccionDTO, Direccion>().ReverseMap();
@@ -118,7 +145,7 @@ namespace VeTLink.Utilidades
             // Clinica
             CreateMap<RegistroClinicaDTO, Clinica>()
                .ForMember(dto => dto.SuscripcionId, config => config.MapFrom(ent => ent.SuscripcionId));
-            
+
             CreateMap<Clinica, ClinicaDTO>().ReverseMap();
 
             // Clinica DetalleClinicaDTO
@@ -188,38 +215,104 @@ namespace VeTLink.Utilidades
                 .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona)).ReverseMap();
 
             //Planes modulos
-
-            CreateMap<Plan, PlanDetalleDTO>().ReverseMap(); ;
-            CreateMap<Modulo, ModuloDTO>().ReverseMap(); ;
-            CreateMap<PlanCrearDTO, Plan>().ReverseMap(); ;
+            CreateMap<Plan, PlanDetalleDTO>().ReverseMap();
+            CreateMap<Modulo, ModuloDTO>().ReverseMap();
+            CreateMap<PlanCrearDTO, Plan>().ReverseMap();
             CreateMap<PlanActualizarDTO, Plan>().ReverseMap();
 
-            //Consulta medica
-            CreateMap<ConsultaMedicaDTO, ConsultaMedica>();
+            // Historial Reproductivo
+            CreateMap<HistorialReproductivo, HistorialReproductivoDTO>().ReverseMap();
+
+            // Historial Médico
+            CreateMap<HistorialMedico, HistorialMedicoDTO>()
+                .ForMember(dest => dest.HistorialReproductivo, opt => opt.MapFrom(src => src.HistorialReproductivo))
+                .ForMember(dest => dest.Enfermedades, opt => opt.MapFrom(src => src.Enfermedades.Select(e => e.Enfermedad).ToList()))
+                .ForMember(dest => dest.Alergias, opt => opt.MapFrom(src => src.Alergias.Select(a => a.Id).ToList()))
+                .ReverseMap();
+
+
+            // Exploración Física
+            CreateMap<ExploracionFisica, ExploracionDTO>().ReverseMap();
+
+            // Diagnóstico
+            CreateMap<Diagnostico, DiagnosticoDTO>().ReverseMap();
+
+            // Síntoma Actual
+            CreateMap<SintomaActual, SintomaDTO>()
+                .ForMember(dest => dest.ComportamientoNombre, opt => opt.MapFrom(src => src.Comportamiento != null ? src.Comportamiento.Descripcion : null))
+                .ForMember(dest => dest.UnidadTiempoNombre, opt => opt.MapFrom(src => src.UnidadTiempo != null ? src.UnidadTiempo.Unidad : null))
+                .ReverseMap();
+
+            // Consulta médica 
+            CreateMap<ConsultaMedicaDTO, ConsultaMedica>(); // Solo para input
 
             CreateMap<ConsultaMedica, DetallesConsultaMedicaDTO>()
-               .ForMember(dest => dest.NombreVeterinario, opt => opt.MapFrom(src =>
+                // Información del veterinario
+                .ForMember(dest => dest.NombreVeterinario, opt => opt.MapFrom(src =>
                     src.Veterinario != null && src.Veterinario.Persona != null
                         ? $"{src.Veterinario.Persona.Nombre} {src.Veterinario.Persona.PrimerApellido}"
                         : null))
-                .ForMember(dest => dest.CedulaVeterinario, opt => opt.MapFrom(src => src.Veterinario != null ? src.Veterinario.CedulaProfesional : null))
-                .ForMember(dest => dest.TipoServicioNombre, opt => opt.MapFrom(src => src.TipoServicio != null ? src.TipoServicio.Servicio : null));
+                .ForMember(dest => dest.CedulaVeterinario, opt => opt.MapFrom(src =>
+                    src.Veterinario != null ? src.Veterinario.CedulaProfesional : null))
+
+                // Información del tipo de servicio
+                .ForMember(dest => dest.TipoServicioNombre, opt => opt.MapFrom(src =>
+                    src.TipoServicio != null ? src.TipoServicio.Servicio : null))
+
+                // Datos completos de la mascota (incluye dueño e historial)
+                .ForMember(dest => dest.Mascota, opt => opt.MapFrom(src => src.Mascota))
+
+                // Datos clínicos
+                .ForMember(dest => dest.Exploracion, opt => opt.MapFrom(src => src.Exploracion))
+                .ForMember(dest => dest.Diagnostico, opt => opt.MapFrom(src => src.Diagnostico))
+                .ForMember(dest => dest.Sintomas, opt => opt.MapFrom(src => src.Sintomas));
 
             // Mapeo de Dueno a DuenoDetalleDTO
-            CreateMap<Dueno, DetalleDuenoDTO>()               
+            CreateMap<Dueno, DetalleDuenoDTO>()
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.Nombre : null))
+                .ForMember(dest => dest.PrimerApellido, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.PrimerApellido : null))
+                .ForMember(dest => dest.SegundoApellido, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.SegundoApellido : null))
                 .ForMember(dest => dest.Genero, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.Genero : null))
                 .ForMember(dest => dest.FechaNacimiento, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.FechaNacimiento : null))
                 .ForMember(dest => dest.NumeroIdentificacion, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.NumeroIdentificacion : null))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Persona != null && src.Persona.Usuario != null ? src.Persona.Usuario.Email : null))
-                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => (string?)null)) // El teléfono no está en el modelo actual
+                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.Telefono : null))
                 .ForMember(dest => dest.Imagen, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.Imagen : null))
                 .ForMember(dest => dest.ClinicaId, opt => opt.MapFrom(src => src.Persona != null ? src.Persona.ClinicaId : null))
                 .ForMember(dest => dest.NombreClinica, opt => opt.MapFrom(src => src.Persona != null && src.Persona.Clinica != null ? src.Persona.Clinica.NombreClinica : null))
                 .ForMember(dest => dest.Mascotas, opt => opt.MapFrom(src => src.Mascotas));
 
-            // Mapeo de Mascota a MascotaResumenDTO
-            CreateMap<Mascota, MascotaDTO>();
+            // Mapeos de Mascota
+            CreateMap<Mascota, MascotaDTO>().ReverseMap();
 
+            CreateMap<Mascota, DetalleMascotaDTO>()
+                .ForMember(dest => dest.NombreDueno, opt => opt.MapFrom(src =>
+                    src.Dueno != null && src.Dueno.Persona != null
+                        ? $"{src.Dueno.Persona.Nombre} {src.Dueno.Persona.PrimerApellido} {src.Dueno.Persona.SegundoApellido ?? ""}".Trim()
+                        : null))
+                .ForMember(dest => dest.Dueno, opt => opt.MapFrom(src => src.Dueno))
+                .ForMember(dest => dest.HistorialMedico, opt => opt.MapFrom(src => src.HistorialMedico))
+                .ForMember(dest => dest.Carnet, opt => opt.MapFrom(src => src.Carnet));
+
+            // Mapeos de Carnet Preventivo
+            CreateMap<CarnetPreventivo, CarnetDTO>()
+                .ForMember(dest => dest.RegistroVacunas, opt => opt.MapFrom(src => src.RegistroVacunas))
+                .ForMember(dest => dest.RegistroDesparasitaciones, opt => opt.MapFrom(src => src.RegistroDesparasitaciones))
+                .ForMember(dest => dest.RegistroBanos, opt => opt.MapFrom(src => src.RegistroBanos))
+                .ForMember(dest => dest.RegistroProfilaxis, opt => opt.MapFrom(src => src.RegistroProfilaxis));
+
+            CreateMap<Vacuna, VacunaDTO>().ReverseMap();
+            CreateMap<Desparasitacion, DesparasitacionDTO>().ReverseMap();
+            CreateMap<Bano, BanoDTO>().ReverseMap();
+            CreateMap<Profilaxis, ProfilaxisDTO>().ReverseMap();
+
+            // Mascota Consulta con historial
+            CreateMap<Mascota, MascotaConsultaDTO>()
+                .ForMember(dest => dest.HistorialMedico, opt => opt.MapFrom(src => src.HistorialMedico))
+                .ReverseMap();
+
+            //Alergia
+            CreateMap<Alergia, AlergiaDTO>().ReverseMap();
         }
     }
 }

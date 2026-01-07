@@ -7,8 +7,8 @@
         public string? SegundoApellido { get; set; }
         public string? Genero { get; set; }
         public DateTime? FechaNacimiento { get; set; }
-        public string Email { get; set; } = null!;
         public int? NumeroIdentificacion { get; set; }
+        public string? Telefono { get; set; }
         public string? Imagen { get; set; }
     }
 }

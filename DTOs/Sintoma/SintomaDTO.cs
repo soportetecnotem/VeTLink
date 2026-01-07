@@ -10,7 +10,9 @@ namespace VeTLink.DTOs.Sintoma
         public int? DuracionCantidad { get; set; }
 
         public int? UnidadTiempoId { get; set; }
+        public string? UnidadTiempoNombre { get; set; }
 
         public int? ComportamientoId { get; set; }
+        public string? ComportamientoNombre { get; set; }
     }
 }

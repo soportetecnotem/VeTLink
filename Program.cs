@@ -93,7 +93,6 @@ builder.Services.AddSwaggerGen(opciones =>
 
 });
 
-
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>

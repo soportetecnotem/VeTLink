@@ -25,6 +25,7 @@ namespace VeTLink.Data
         public DbSet<Direccion> Direcciones { get; set; }
         public DbSet<Dueno> Duenos { get; set; }
         public DbSet<Enfermedad> Enfermedades { get; set; }
+        public DbSet<Error> Errores { get; set; }
         public DbSet<EstadoGeneral> EstadosGeneral { get; set; }
         public DbSet<EstadoSuscripcion> EstadosSuscripcion { get; set; }
         public DbSet<EventoCalendario> EventosCalendario { get; set; }

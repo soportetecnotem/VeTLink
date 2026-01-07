@@ -4,7 +4,7 @@ using VeTLink.DTOs.Direccion;
 namespace VeTLink.DTOs.Dueno
 {
     public class DuenoDTO
-    {        
+    {
         [Required(ErrorMessage = "El nombre del dueño es requerido.")]
         [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
         public string Nombre { get; set; } = null!;
@@ -21,14 +21,17 @@ namespace VeTLink.DTOs.Dueno
 
         public DateTime? FechaNacimiento { get; set; }
 
+        public int? Edad { get; set; }
+
         public int? NumeroIdentificacion { get; set; }
 
-        // Email y contraseña REQUERIDOS para crear cuenta permanente
+        // Email REQUERIDO para crear cuenta permanente
         [Required(ErrorMessage = "El email es requerido para crear la cuenta del dueño.")]
         [EmailAddress(ErrorMessage = "El formato del email no es válido.")]
         public string Email { get; set; } = null!;
 
-       public string Password { get; set; } = "Abc123.#";
+        // Password NO es requerido, se usa "Abc123.#" por defecto
+        public string? Password { get; set; }
 
         [Phone(ErrorMessage = "El formato del teléfono no es válido.")]
         public string? Telefono { get; set; }

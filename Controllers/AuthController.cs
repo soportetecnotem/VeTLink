@@ -36,6 +36,15 @@ namespace VeTLink.Controllers
                 Message = []
             };
 
+            // Validar que el email no esté registrado
+            var emailExistente = await userManager.FindByEmailAsync(model.Email);
+            if (emailExistente != null)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add("Ya existe una cuenta registrada con este correo electrónico.");
+                return BadRequest(respuesta);
+            }
+
             var user = mapper.Map<IdentityUser>(model);
             var result = await userManager.CreateAsync(user, model.Password);
 
@@ -49,11 +58,11 @@ namespace VeTLink.Controllers
                 await context.SaveChangesAsync();
 
                 //var token = GenerateJwtToken(user);
-                
+
                 respuesta.Status = true;
                 respuesta.Message.Add("Usuario Creado.");
                 //respuesta.Response = token;
-                return respuesta;
+                return Ok(respuesta);
             }
             else
             {
@@ -63,8 +72,8 @@ namespace VeTLink.Controllers
                     respuesta.Message.Add(customMessage);
                 }
 
-                return respuesta;
-            }            
+                return BadRequest(respuesta);
+            }
         }
 
         [HttpGet("Detalles/{userName}")]
@@ -171,7 +180,7 @@ namespace VeTLink.Controllers
             var encodedEmail = model.Email;
 
             // Construir link hacia el frontend con parámetros en query string
-            var resetLink = $"https://vetlink.pages.dev/auth/resetPassword?token={encodedToken}&email={encodedEmail}";
+            var resetLink = $"https://vetlink.pages.dev/auth/resetpassword?token={encodedToken}&email={encodedEmail}";
 
             // Construir mensaje HTML
             var mensajeHtml = $@"
@@ -225,11 +234,33 @@ namespace VeTLink.Controllers
         [HttpPost("PrimerUsuario")]
         public async Task<IActionResult> RegisterFirstUserAdmin(RegisterDto model)
         {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            // Validar que el email no esté registrado
+            var emailExistente = await userManager.FindByEmailAsync(model.Email);
+            if (emailExistente != null)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add("Ya existe una cuenta registrada con este correo electrónico.");
+                return BadRequest(respuesta);
+            }
+
             var user = mapper.Map<IdentityUser>(model);
             var result = await userManager.CreateAsync(user, model.Password);
 
             if (!result.Succeeded)
-                return BadRequest(result.Errors);
+            {
+                respuesta.Status = false;
+                foreach (var error in result.Errors)
+                {
+                    var customMessage = MapIdentityError(error);
+                    respuesta.Message.Add(customMessage);
+                }
+                return BadRequest(respuesta);
+            }
 
             // Mapear a Persona
             var persona = mapper.Map<Persona>(model);
@@ -258,8 +289,13 @@ namespace VeTLink.Controllers
                 await userManager.AddToRoleAsync(user, "User");
             }
 
-            var token = GenerateJwtTokenAsync(user);
-            return Ok(new { Token = token });
+            var token = await GenerateJwtTokenAsync(user);
+
+            respuesta.Status = true;
+            respuesta.Message.Add("Usuario registrado exitosamente.");
+            respuesta.Response = new { Token = token };
+
+            return Ok(respuesta);
         }
 
         [HttpDelete("Eliminar/{username}")]
@@ -278,20 +314,33 @@ namespace VeTLink.Controllers
                 respuesta.Message.Add("Usuario no encontrado.");
                 return respuesta;
             }
-
+            try
+            { 
             var result = await userManager.DeleteAsync(usuario);
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
+                if (!result.Succeeded)
                 {
-                    respuesta.Message.Add(error.Description);
+                    foreach (var error in result.Errors)
+                    {
+                        respuesta.Message.Add(error.Description);
+                    }
+                    return respuesta;
+                }
+                respuesta.Status = true;
+                respuesta.Message.Add("Usuario eliminado correctamente.");
+                respuesta.Response = username;
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("FK"))
+                {
+                    respuesta.Message.Add("El usuario tiene datos vinculados. Eliminación no permitida.");
+                }
+                else
+                {
+                    respuesta.Message.Add(ex.Message);
                 }
                 return respuesta;
-            }
-
-            respuesta.Status = true;
-            respuesta.Message.Add("Usuario eliminado correctamente.");
-            respuesta.Response = username;
+            }           
             return respuesta;
         }
 
@@ -349,16 +398,19 @@ namespace VeTLink.Controllers
 
             var claims = new List<Claim>
             {
-                new("UserId", user.Id),
-                new("Email", user.Email ?? "")
+                // IMPORTANTE: Usar ClaimTypes.NameIdentifier en lugar de "UserId"
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Name, user.UserName ?? "")
             };
 
             var usuario = await userManager.FindByEmailAsync(user.Email!);
             var roles = await userManager.GetRolesAsync(usuario!);
             foreach (var rol in roles)
             {
-                claims.Add(new Claim("Roles", rol));
+                claims.Add(new Claim(ClaimTypes.Role, rol));
             }
+
             var expiracion = DateTime.UtcNow.AddDays(1);
 
             var TokenSeguridad = new JwtSecurityToken(issuer: null, audience: null,
@@ -377,29 +429,28 @@ namespace VeTLink.Controllers
         {
             var claims = new List<Claim>
             {
-                new("UserId", credencialesUsuarioDTO.Id),
-                new("Email", credencialesUsuarioDTO.Email!),
-                new("UserName",credencialesUsuarioDTO.UserName!)
+                // IMPORTANTE: Usar ClaimTypes.NameIdentifier en lugar de "UserId"
+                new Claim(ClaimTypes.NameIdentifier, credencialesUsuarioDTO.Id),
+                new Claim(ClaimTypes.Email, credencialesUsuarioDTO.Email!),
+                new Claim("UserId", credencialesUsuarioDTO.Id!),
+                new Claim(ClaimTypes.Name, credencialesUsuarioDTO.UserName!)
             };
+
             var usuario = await userManager.FindByNameAsync(credencialesUsuarioDTO.UserName!);
             var roles = await userManager.GetRolesAsync(usuario!);
             foreach (var rol in roles)
             {
-                claims.Add(new Claim("Roles", rol));
+                claims.Add(new Claim(ClaimTypes.Role, rol));
             }
-
-            //var claimsDB = await userManager.GetClaimsAsync(usuario!);
-
-            //claims.AddRange(claimsDB);
 
             var llave = new SymmetricSecurityKey(Encoding.UTF8
                 .GetBytes(config["LlaveJWT"]!));
-            var credemciales = new SigningCredentials(llave, SecurityAlgorithms.HmacSha256);
+            var credenciales = new SigningCredentials(llave, SecurityAlgorithms.HmacSha256);
 
             var expiracion = DateTime.UtcNow.AddDays(10);
 
             var TokenSeguridad = new JwtSecurityToken(issuer: null, audience: null,
-                claims: claims, expires: expiracion, signingCredentials: credemciales);
+                claims: claims, expires: expiracion, signingCredentials: credenciales);
 
             var token = new JwtSecurityTokenHandler().WriteToken(TokenSeguridad);
 
