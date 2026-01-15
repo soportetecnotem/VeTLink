@@ -57,11 +57,17 @@ namespace VeTLink.Controllers
                 context.Personas.Add(persona);
                 await context.SaveChangesAsync();
 
-                //var token = GenerateJwtToken(user);
+                // Crear rol AdminClinica si no existe
+                if (!await roleManager.RoleExistsAsync("AdminClinica"))
+                {
+                    await roleManager.CreateAsync(new IdentityRole("AdminClinica"));
+                }
+
+                // Asignar rol AdminClinica al usuario
+                await userManager.AddToRoleAsync(user, "AdminClinica");
 
                 respuesta.Status = true;
-                respuesta.Message.Add("Usuario Creado.");
-                //respuesta.Response = token;
+                respuesta.Message.Add("Usuario creado exitosamente con rol AdminClinica.");
                 return Ok(respuesta);
             }
             else
@@ -105,6 +111,368 @@ namespace VeTLink.Controllers
             respuesta.Response = usuarioDTO;
 
             return respuesta;
+        }
+
+        [HttpPut("Actualizar/{userId}")]
+        [Authorize]
+        [EndpointSummary("Actualiza los datos de un usuario incluyendo roles")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ActualizarUsuario(string userId, [FromBody] ActualizarUsuarioDTO model)
+        {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            using var transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                // Buscar el usuario
+                var usuario = await userManager.FindByIdAsync(userId);
+                if (usuario == null)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add("Usuario no encontrado.");
+                    return NotFound(respuesta);
+                }
+
+                // Buscar la persona asociada
+                var persona = await context.Personas
+                    .FirstOrDefaultAsync(p => p.UsuarioId == userId);
+
+                if (persona == null)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add("No se encontró el perfil de persona asociado.");
+                    return NotFound(respuesta);
+                }
+
+                // Actualizar email si cambió y validar que no esté en uso
+                if (!string.IsNullOrWhiteSpace(model.Email) && model.Email != usuario.Email)
+                {
+                    var emailExistente = await userManager.FindByEmailAsync(model.Email);
+                    if (emailExistente != null && emailExistente.Id != userId)
+                    {
+                        respuesta.Status = false;
+                        respuesta.Message.Add("El correo electrónico ya está en uso por otro usuario.");
+                        return BadRequest(respuesta);
+                    }
+
+                    usuario.Email = model.Email;
+                    usuario.UserName = model.Email; // Mantener sincronizado
+                    usuario.NormalizedEmail = model.Email.ToUpper();
+                    usuario.NormalizedUserName = model.Email.ToUpper();
+                }
+
+                // Actualizar datos de la persona
+                if (!string.IsNullOrWhiteSpace(model.Nombre))
+                    persona.Nombre = model.Nombre;
+
+                if (!string.IsNullOrWhiteSpace(model.PrimerApellido))
+                    persona.PrimerApellido = model.PrimerApellido;
+
+                persona.SegundoApellido = model.SegundoApellido ?? persona.SegundoApellido;
+                persona.Genero = model.Genero ?? persona.Genero;
+                persona.FechaNacimiento = model.FechaNacimiento ?? persona.FechaNacimiento;
+                persona.NumeroIdentificacion = model.NumeroIdentificacion ?? persona.NumeroIdentificacion;
+                persona.Telefono = model.Telefono ?? persona.Telefono;
+                persona.Imagen = model.Imagen ?? persona.Imagen;
+
+                // Recalcular edad si cambió la fecha de nacimiento
+                if (persona.FechaNacimiento.HasValue && persona.FechaNacimiento.Value != default)
+                {
+                    var today = DateTime.Today;
+                    var edad = today.Year - persona.FechaNacimiento.Value.Year;
+                    if (persona.FechaNacimiento.Value.Date > today.AddYears(-edad))
+                    {
+                        edad--;
+                    }
+                    persona.Edad = edad >= 0 ? edad : null;
+                }
+
+                // Actualizar TipoUsuario si cambió
+                if (model.TipoUsuarioId.HasValue && model.TipoUsuarioId.Value != persona.TipoUsuarioId)
+                {
+                    persona.TipoUsuarioId = model.TipoUsuarioId.Value;
+                }
+
+                // Actualizar el usuario en Identity
+                var resultUsuario = await userManager.UpdateAsync(usuario);
+                if (!resultUsuario.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    respuesta.Status = false;
+                    foreach (var error in resultUsuario.Errors)
+                    {
+                        respuesta.Message.Add(MapIdentityError(error));
+                    }
+                    return BadRequest(respuesta);
+                }
+
+                // Actualizar persona en la base de datos
+                context.Personas.Update(persona);
+                await context.SaveChangesAsync();
+
+                // ========================================
+                // ACTUALIZAR ROLES
+                // ========================================
+                if (model.Roles != null && model.Roles.Any())
+                {
+                    // Obtener roles actuales
+                    var rolesActuales = await userManager.GetRolesAsync(usuario);
+
+                    // Roles a agregar (están en model.Roles pero no en rolesActuales)
+                    var rolesParaAgregar = model.Roles.Except(rolesActuales, StringComparer.OrdinalIgnoreCase).ToList();
+
+                    // Roles a eliminar (están en rolesActuales pero no en model.Roles)
+                    var rolesParaEliminar = rolesActuales.Except(model.Roles, StringComparer.OrdinalIgnoreCase).ToList();
+
+                    // Validar y crear roles que no existan
+                    foreach (var rol in rolesParaAgregar)
+                    {
+                        if (!await roleManager.RoleExistsAsync(rol))
+                        {
+                            await roleManager.CreateAsync(new IdentityRole(rol));
+                        }
+                    }
+
+                    // Eliminar roles
+                    if (rolesParaEliminar.Any())
+                    {
+                        var resultRemove = await userManager.RemoveFromRolesAsync(usuario, rolesParaEliminar);
+                        if (!resultRemove.Succeeded)
+                        {
+                            await transaction.RollbackAsync();
+                            respuesta.Status = false;
+                            foreach (var error in resultRemove.Errors)
+                            {
+                                respuesta.Message.Add($"Error al eliminar rol: {error.Description}");
+                            }
+                            return BadRequest(respuesta);
+                        }
+                    }
+
+                    // Agregar roles
+                    if (rolesParaAgregar.Any())
+                    {
+                        var resultAdd = await userManager.AddToRolesAsync(usuario, rolesParaAgregar);
+                        if (!resultAdd.Succeeded)
+                        {
+                            await transaction.RollbackAsync();
+                            respuesta.Status = false;
+                            foreach (var error in resultAdd.Errors)
+                            {
+                                respuesta.Message.Add($"Error al agregar rol: {error.Description}");
+                            }
+                            return BadRequest(respuesta);
+                        }
+                    }
+                }
+
+                // ========================================
+                // CAMBIO DE CONTRASEÑA (OPCIONAL)
+                // ========================================
+                if (!string.IsNullOrWhiteSpace(model.NuevaContrasena))
+                {
+                    // Si se proporciona contraseña actual, verificarla
+                    if (!string.IsNullOrWhiteSpace(model.ContrasenaActual))
+                    {
+                        var resultPassword = await userManager.ChangePasswordAsync(usuario, model.ContrasenaActual, model.NuevaContrasena);
+                        if (!resultPassword.Succeeded)
+                        {
+                            await transaction.RollbackAsync();
+                            respuesta.Status = false;
+                            respuesta.Message.Add("La contraseña actual es incorrecta.");
+                            foreach (var error in resultPassword.Errors)
+                            {
+                                respuesta.Message.Add(MapIdentityError(error));
+                            }
+                            return BadRequest(respuesta);
+                        }
+                    }
+                    else
+                    {
+                        // Si no se proporciona contraseña actual, solo admin puede cambiarla
+                        var esAdmin = User.IsInRole("Admin");
+                        if (!esAdmin)
+                        {
+                            respuesta.Status = false;
+                            respuesta.Message.Add("Debe proporcionar la contraseña actual para cambiarla.");
+                            return BadRequest(respuesta);
+                        }
+
+                        // Admin cambia contraseña sin necesidad de la actual
+                        var token = await userManager.GeneratePasswordResetTokenAsync(usuario);
+                        var resultPassword = await userManager.ResetPasswordAsync(usuario, token, model.NuevaContrasena);
+
+                        if (!resultPassword.Succeeded)
+                        {
+                            await transaction.RollbackAsync();
+                            respuesta.Status = false;
+                            foreach (var error in resultPassword.Errors)
+                            {
+                                respuesta.Message.Add(MapIdentityError(error));
+                            }
+                            return BadRequest(respuesta);
+                        }
+                    }
+                }
+
+                await transaction.CommitAsync();
+
+                // Obtener datos actualizados para la respuesta
+                var personaActualizada = await context.Personas
+                    .Include(p => p.TipoUsuario)
+                    .Include(p => p.Direccion)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == persona.Id);
+
+                var personaDto = mapper.Map<DetallePersonaDTO>(personaActualizada);
+
+                // Agregar roles a la respuesta
+                var rolesFinales = await userManager.GetRolesAsync(usuario);
+
+                respuesta.Status = true;
+                respuesta.Message.Add("Usuario actualizado exitosamente.");
+                respuesta.Response = new
+                {
+                    Usuario = personaDto,
+                    Roles = rolesFinales
+                };
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al actualizar el usuario: {ex.Message}");
+                return StatusCode(500, respuesta);
+            }
+        }
+
+        [HttpGet("Listado")]
+        [Authorize(Roles = "Admin")]
+        [EndpointSummary("Obtiene el listado completo de usuarios del sistema (solo Admin)")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ObtenerListadoUsuarios(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? buscar = null,
+            [FromQuery] int? tipoUsuarioId = null,
+            [FromQuery] string? rol = null)
+        {
+            var respuesta = new RespuestaObjetoDTO
+            {
+                Message = []
+            };
+
+            try
+            {
+                // Query base con todas las relaciones
+                var query = context.Personas
+                    .Include(p => p.Usuario)
+                    .Include(p => p.TipoUsuario)
+                    .Include(p => p.Clinica)
+                    .Include(p => p.Direccion)
+                    .AsQueryable();
+
+                // Filtro por búsqueda (nombre, apellido, email)
+                if (!string.IsNullOrWhiteSpace(buscar))
+                {
+                    var buscarLower = buscar.ToLower();
+                    query = query.Where(p =>
+                        p.Nombre.ToLower().Contains(buscarLower) ||
+                        p.PrimerApellido.ToLower().Contains(buscarLower) ||
+                        (p.SegundoApellido != null && p.SegundoApellido.ToLower().Contains(buscarLower)) ||
+                        p.Usuario.Email!.ToLower().Contains(buscarLower));
+                }
+
+                // Filtro por tipo de usuario
+                if (tipoUsuarioId.HasValue)
+                {
+                    query = query.Where(p => p.TipoUsuarioId == tipoUsuarioId.Value);
+                }
+
+                // Filtro por rol
+                if (!string.IsNullOrWhiteSpace(rol))
+                {
+                    var usuariosConRol = await (from ur in context.UserRoles
+                                                join r in context.Roles on ur.RoleId equals r.Id
+                                                where r.Name == rol
+                                                select ur.UserId).ToListAsync();
+
+                    query = query.Where(p => usuariosConRol.Contains(p.UsuarioId));
+                }
+
+                // Total de registros
+                var total = await query.CountAsync();
+
+                // Paginación
+                var personas = await query
+                    .OrderBy(p => p.Nombre)
+                    .ThenBy(p => p.PrimerApellido)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                // Mapear a DTO y agregar roles
+                var usuariosDTO = new List<UsuarioSistemaDTO>();
+
+                foreach (var persona in personas)
+                {
+                    var usuarioDto = new UsuarioSistemaDTO
+                    {
+                        Id = persona.Id,
+                        UsuarioId = persona.UsuarioId,
+                        Email = persona.Usuario.Email ?? "",
+                        Nombre = persona.Nombre,
+                        PrimerApellido = persona.PrimerApellido,
+                        SegundoApellido = persona.SegundoApellido,
+                        NombreCompleto = $"{persona.Nombre} {persona.PrimerApellido} {persona.SegundoApellido ?? ""}".Trim(),
+                        Genero = persona.Genero,
+                        FechaNacimiento = persona.FechaNacimiento,
+                        Edad = persona.Edad,
+                        NumeroIdentificacion = persona.NumeroIdentificacion,
+                        Telefono = persona.Telefono,
+                        Imagen = persona.Imagen,
+                        TipoUsuarioId = persona.TipoUsuarioId,
+                        TipoUsuarioNombre = persona.TipoUsuario?.Nombre,
+                        ClinicaId = persona.ClinicaId,
+                        NombreClinica = persona.Clinica?.NombreClinica,
+                        EmailConfirmado = persona.Usuario.EmailConfirmed,
+                        CuentaBloqueada = persona.Usuario.LockoutEnd.HasValue && persona.Usuario.LockoutEnd.Value > DateTimeOffset.UtcNow
+                    };
+
+                    // Obtener roles del usuario
+                    var roles = await (from ur in context.UserRoles
+                                       join r in context.Roles on ur.RoleId equals r.Id
+                                       where ur.UserId == persona.UsuarioId
+                                       select r.Name).ToListAsync();
+
+                    usuarioDto.Roles = roles;
+
+                    usuariosDTO.Add(usuarioDto);
+                }
+
+                respuesta.Status = true;
+                respuesta.Message.Add($"Se encontraron {total} usuario(s).");
+                respuesta.Response = new
+                {
+                    total,
+                    page,
+                    pageSize,
+                    totalPages = (int)Math.Ceiling(total / (double)pageSize),
+                    data = usuariosDTO
+                };
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al obtener el listado de usuarios: {ex.Message}");
+                return StatusCode(500, respuesta);
+            }
         }
 
         [HttpPost("login")]
@@ -184,15 +552,15 @@ namespace VeTLink.Controllers
 
             // Construir mensaje HTML
             var mensajeHtml = $@"
-        <h2>Recuperación de contraseña</h2>
-        <p>Hola, {user.UserName}:</p>
-        <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
-        <p>Da clic en el siguiente enlace para continuar:</p>
-        <p><a href='{resetLink}' target='_blank'>Restablecer contraseña</a></p>
-        <p>Si no solicitaste este cambio, ignora este mensaje.</p>
-        <hr>
-        <p style='font-size:12px;color:#888;'>Este enlace es válido por tiempo limitado.</p>
-    ";
+                <h2>Recuperación de contraseña</h2>
+                <p>Hola, {user.UserName}:</p>
+                <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
+                <p>Da clic en el siguiente enlace para continuar:</p>
+                <p><a href='{resetLink}' target='_blank'>Restablecer contraseña</a></p>
+                <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+                <hr>
+                <p style='font-size:12px;color:#888;'>Este enlace es válido por tiempo limitado.</p>
+            ";
 
             // Enviar correo
             await emailService.SendEmailAsync(model.Email, "Recupera tu contraseña", mensajeHtml);
@@ -283,13 +651,13 @@ namespace VeTLink.Controllers
             else
             {
                 // Asignar rol por defecto a los demás usuarios
-                if (!await roleManager.RoleExistsAsync("User"))
-                    await roleManager.CreateAsync(new IdentityRole("User"));
+                if (!await roleManager.RoleExistsAsync("AdminClinica"))
+                    await roleManager.CreateAsync(new IdentityRole("AdminClinica"));
 
-                await userManager.AddToRoleAsync(user, "User");
+                await userManager.AddToRoleAsync(user, "AdminClinica");
             }
 
-            var token = await GenerateJwtTokenAsync(user);
+            var token = await ConstruirToken(user);
 
             respuesta.Status = true;
             respuesta.Message.Add("Usuario registrado exitosamente.");
@@ -373,7 +741,7 @@ namespace VeTLink.Controllers
                 }
 
                 // Generar un nuevo JWT
-                var token = GenerateJwtTokenAsync(user);
+                var token = ConstruirToken(user);
 
                 // Retornar respuesta
                 respuesta.Status = true;
@@ -390,39 +758,39 @@ namespace VeTLink.Controllers
             }
         }
 
-        private async Task<TokenDTO> GenerateJwtTokenAsync(IdentityUser user)
-        {
-            var jwtSettings = config.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        //private async Task<TokenDTO> GenerateJwtTokenAsync(IdentityUser user)
+        //{
+        //    var jwtSettings = config.GetSection("Jwt");
+        //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+        //    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new List<Claim>
-            {
-                // IMPORTANTE: Usar ClaimTypes.NameIdentifier en lugar de "UserId"
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email ?? ""),
-                new Claim(ClaimTypes.Name, user.UserName ?? "")
-            };
+        //    var claims = new List<Claim>
+        //    {
+        //        // IMPORTANTE: Usar ClaimTypes.NameIdentifier en lugar de "UserId"
+        //        new Claim(ClaimTypes.NameIdentifier, user.Id),
+        //        new Claim(ClaimTypes.Email, user.Email ?? ""),
+        //        new Claim(ClaimTypes.Name, user.UserName ?? "")
+        //    };
 
-            var usuario = await userManager.FindByEmailAsync(user.Email!);
-            var roles = await userManager.GetRolesAsync(usuario!);
-            foreach (var rol in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, rol));
-            }
+        //    var usuario = await userManager.FindByEmailAsync(user.Email!);
+        //    var roles = await userManager.GetRolesAsync(usuario!);
+        //    foreach (var rol in roles)
+        //    {
+        //        claims.Add(new Claim(ClaimTypes.Role, rol));
+        //    }
 
-            var expiracion = DateTime.UtcNow.AddDays(1);
+        //    var expiracion = DateTime.UtcNow.AddDays(1);
 
-            var TokenSeguridad = new JwtSecurityToken(issuer: null, audience: null,
-                           claims: claims, expires: expiracion, signingCredentials: creds);
+        //    var TokenSeguridad = new JwtSecurityToken(issuer: null, audience: null,
+        //                   claims: claims, expires: expiracion, signingCredentials: creds);
 
-            var token = new JwtSecurityTokenHandler().WriteToken(TokenSeguridad);
-            return new TokenDTO
-            {
-                Token = token,
-                Expiracion = expiracion
-            };
-        }
+        //    var token = new JwtSecurityTokenHandler().WriteToken(TokenSeguridad);
+        //    return new TokenDTO
+        //    {
+        //        Token = token,
+        //        Expiracion = expiracion
+        //    };
+        //}
 
         private async Task<RespuestaAutenticacionDTO> ConstruirToken(
             IdentityUser credencialesUsuarioDTO)
