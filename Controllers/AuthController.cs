@@ -25,8 +25,10 @@ namespace VeTLink.Controllers
         SignInManager<IdentityUser> signInManager,
         ApplicationDbContext context,
         IConfiguration config,
-        IMapper mapper) : ControllerBase
+        IMapper mapper,
+        IServicioLlaves servicioLlaves) : ControllerBase
     {
+
         [HttpPost("Nuevo")]
         [EndpointSummary("Registrar nuevo usuario.")]
         public async Task<ActionResult<RespuestaGeneralDTO>> Register(RegisterDto model)
@@ -65,6 +67,9 @@ namespace VeTLink.Controllers
 
                 // Asignar rol AdminClinica al usuario
                 await userManager.AddToRoleAsync(user, "AdminClinica");
+
+                //Asignar Llave Gratuita al usuario
+                await servicioLlaves.CrearLlave(user.Id, TipoLlave.Gratuita);
 
                 respuesta.Status = true;
                 respuesta.Message.Add("Usuario creado exitosamente con rol AdminClinica.");

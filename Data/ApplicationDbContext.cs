@@ -60,6 +60,7 @@ namespace VeTLink.Data
         public DbSet<Vacuna> Vacunas { get; set; }
         public DbSet<Veterinario> Veterinarios { get; set; }
         public DbSet<ViaAdministracion> ViasAdministracion { get; set; }
+        public DbSet<LlaveAPI> LlavesAPI { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

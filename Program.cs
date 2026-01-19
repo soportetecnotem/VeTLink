@@ -33,6 +33,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddScoped<IServicioLlaves, ServicioLlaves>();
+
 //Configuración de JWT
 //var jwtKey = builder.Configuration["Jwt:Key"];
 //var jwtIssuer = builder.Configuration["Jwt:Issuer"];
