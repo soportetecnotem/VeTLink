@@ -72,7 +72,7 @@ namespace VeTLink.Controllers
                 await servicioLlaves.CrearLlave(user.Id, TipoLlave.Gratuita);
 
                 respuesta.Status = true;
-                respuesta.Message.Add("Usuario creado exitosamente con rol AdminClinica.");
+                respuesta.Message.Add("Usuario creado exitosamente con rol AdminClinica. Version Gratuita");
                 return Ok(respuesta);
             }
             else

@@ -14,6 +14,7 @@ using VeTLink.DTOs.Enfermedad;
 using VeTLink.DTOs.Exploracion;
 using VeTLink.DTOs.HistorialMedico;
 using VeTLink.DTOs.HistorialReproductivo;
+using VeTLink.DTOs.Llave;
 using VeTLink.DTOs.Mascota;
 using VeTLink.DTOs.Modulo;
 using VeTLink.DTOs.Persona;
@@ -313,6 +314,9 @@ namespace VeTLink.Utilidades
 
             //Alergia
             CreateMap<Alergia, AlergiaDTO>().ReverseMap();
+
+            //Llavas API
+            CreateMap<LlaveAPI, LlaveDTO>().ReverseMap();
         }
     }
 }
