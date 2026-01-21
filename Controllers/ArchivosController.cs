@@ -87,7 +87,6 @@ namespace VeTLink.Controllers
                 {
                     success = true,
                     message = "Archivo subido exitosamente",
-                    source =$"{r2ServiceUrl}/{r2BucketName}/{key}/{file}",
                     data = new
                     {
                         key = objectKey,
