@@ -1,23 +1,26 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using VeTLink.DTOs.CDN;
 using VeTLink.DTOs.Responses;
-using Amazon.Runtime;
-using Amazon.S3;
-using Amazon.S3.Model;
+using VeTLink.Services;
 
 namespace VeTLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ArchivosController(IWebHostEnvironment env, IConfiguration _config) : ControllerBase
+    public class ArchivosController(IWebHostEnvironment env, IConfiguration _config, 
+        IAlmacenadorArchivos almacenadorArchivos ) : ControllerBase
     {
         const string r2AccessKeyId = "5617b0f960a5167e000d083710d07ae5";
         const string r2SecretAccessKey = "83159d7235eb12cb273f51b563eb58c9248feb25d3eb49eeb9082763e691b31c";
         const string r2BucketName = "vetlink";
         const string r2ServiceUrl = "https://c5744f7e8eac238dbc9d3ddb611039b7.r2.cloudflarestorage.com";
-
+        const string Contenedor = "vetlinkstorage";
         private AmazonS3Client GetR2Client()
         {
             var credentials = new BasicAWSCredentials(r2AccessKeyId, r2SecretAccessKey);
@@ -377,18 +380,48 @@ namespace VeTLink.Controllers
                 return StatusCode(500, respuesta);
             }
         }
+
+
+        /////ArchivosAzure
+
+        [HttpPost("SubirArchivoAzure")]
+        [EndpointSummary("Sube un archivo en Contenedor de Azure.")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> SubirArchivoAzure([FromForm] ArchivosAzureDTO archivoDTO)
+        { 
+         if (archivoDTO.Archivo == null || archivoDTO.Archivo.Length == 0)
+            {
+                return BadRequest("No se proporcionó ningún archivo.");
+            }
+            try
+            {
+                var rutaArchivo = await almacenadorArchivos.Almacenar(Contenedor, archivoDTO.Archivo);
+                var respuesta = new RespuestaObjetoDTO
+                {
+                    Status = true,
+                    Message = ["Archivo subido correctamente."],
+                    Response = rutaArchivo
+                };
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                var respuesta = new RespuestaObjetoDTO
+                {
+                    Status = false,
+                    Message = [$"Error al subir el archivo: {ex.Message}"]
+                };
+                return StatusCode(500, respuesta);
+            }
+        }
+
+
     }
 
-    public class FileUpload
-    {
-        [Required]
-        public IFormFile Archivo { get; set; }
-    }
     public class CloudflareR2UploadRequest
     {
         [Required]
         [Display(Description = "El archivo a subir.")]
-        public IFormFile Archivo { get; set; }
+        public IFormFile? Archivo { get; set; }
 
         [Display(Description = "La carpeta de destino dentro del bucket de Cloudflare R2. Puede ser nula o vacía para subir a la raíz del bucket.")]
         public string? Carpeta { get; set; } // Usamos string? para indicar que puede ser nulo

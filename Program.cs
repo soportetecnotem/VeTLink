@@ -35,6 +35,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 
 builder.Services.AddScoped<IServicioLlaves, ServicioLlaves>();
 
+builder.Services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosAzure>();
+
 //Configuración de JWT
 //var jwtKey = builder.Configuration["Jwt:Key"];
 //var jwtIssuer = builder.Configuration["Jwt:Issuer"];
