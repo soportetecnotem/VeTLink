@@ -11,7 +11,7 @@ namespace VeTLink.Services
 
         public AlmacenadorArchivosAzure(IConfiguration configuration)
         {
-            connectionString = configuration.GetConnectionString("AzureStorageConnection")!;
+            connectionString = configuration["azureKey"]!;
         }
         public async Task<string> Almacenar(string contenedor, IFormFile archivo)
         {
