@@ -61,6 +61,9 @@ namespace VeTLink.Data
         public DbSet<Veterinario> Veterinarios { get; set; }
         public DbSet<ViaAdministracion> ViasAdministracion { get; set; }
         public DbSet<LlaveAPI> LlavesAPI { get; set; }
+        public DbSet<CPColonias> Colonias { get; set; }
+        public DbSet<CPEdos> Estados { get; set; }
+        public DbSet<CPMunDel> Municipios { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -73,6 +76,25 @@ namespace VeTLink.Data
             {
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
             }
+
+            // Configurar tablas de códigos postales como solo lectura
+            modelBuilder.Entity<CPColonias>(entity =>
+            {
+                entity.ToTable("CPColonias", t => t.ExcludeFromMigrations()); // NO crear en migraciones
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<CPEdos>(entity =>
+            {
+                entity.ToTable("CPEdos", t => t.ExcludeFromMigrations()); // NO crear en migraciones
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<CPMunDel>(entity =>
+            {
+                entity.ToTable("CPMunDel", t => t.ExcludeFromMigrations()); // NO crear en migraciones
+                entity.HasKey(e => e.Id);
+            });
         }
     }
 }

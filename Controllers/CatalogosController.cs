@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Numerics;
 using VeTLink.Data;
 using VeTLink.DTOs.Catalogo;
+using VeTLink.DTOs.CP;
 using VeTLink.DTOs.Responses;
 using VeTLink.Models;
 
@@ -1804,5 +1805,231 @@ namespace VeTLink.Controllers
                 return respuesta;
             }
         }
+
+        /////<<<---- UBICACION ---->>>/////
+
+        //===================================================
+        // CÓDIGOS POSTALES - VALIDACIÓN Y BÚSQUEDA
+        //===================================================
+
+        [HttpGet("CodigoPostal/Validar/{cp}")]
+        [EndpointSummary("Valida un código postal y retorna la información de ubicación")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ValidarCodigoPostal(string cp)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            try
+            {
+                // Limpiar y validar formato del CP
+                var cpLimpio = cp.Trim();
+                if (cpLimpio.Length != 5 || !int.TryParse(cpLimpio, out int cpNumerico))
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add("El código postal debe tener 5 dígitos.");
+                    return BadRequest(respuesta);
+                }
+
+                // Buscar todas las colonias con ese código postal
+                var colonias = await context.Colonias
+                    .Where(c => c.CodigoP == cpLimpio)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                if (!colonias.Any())
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add($"No se encontró información para el código postal {cpLimpio}.");
+                    return NotFound(respuesta);
+                }
+
+                // Buscar municipio - Traer a memoria y hacer comparación numérica
+                var todosMunicipios = await context.Municipios
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var municipio = todosMunicipios
+                    .FirstOrDefault(m =>
+                        int.TryParse(m.CPINI, out int cpIni) &&
+                        int.TryParse(m.CPFIN, out int cpFin) &&
+                        cpIni <= cpNumerico &&
+                        cpFin >= cpNumerico);
+
+                if (municipio == null)
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add($"No se encontró el municipio para el código postal {cpLimpio}.");
+                    return NotFound(respuesta);
+                }
+
+                // Buscar estado usando el campo EDO del municipio
+                var estado = await context.Estados
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.Edo == municipio.EDO);
+
+                // Construir respuesta
+                var resultado = new ValidacionCPDTO
+                {
+                    Valido = true,
+                    CP = cpLimpio,
+                    Estado = estado?.Nombre ?? municipio.EDO,
+                    Municipio = municipio.NOMBRE,
+                    Colonias = colonias
+                        .Select(c => c.Nombre ?? "")
+                        .Where(c => !string.IsNullOrWhiteSpace(c))
+                        .Distinct()
+                        .OrderBy(c => c)
+                        .ToList(),
+                    TotalColonias = colonias.Count
+                };
+
+                respuesta.Status = true;
+                respuesta.Response = resultado;
+                respuesta.Message.Add($"Código postal válido. {resultado.TotalColonias} colonia(s) en {municipio.NOMBRE}, {resultado.Estado}.");
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al validar el código postal: {ex.Message}");
+                return StatusCode(500, respuesta);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene la lista de estados disponibles
+        /// </summary>
+        [HttpGet("CodigoPostal/Estados")]
+        [EndpointSummary("Obtiene la lista de estados de México")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ObtenerEstados()
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            try
+            {
+                var estados = await context.Estados
+                    .OrderBy(e => e.Nombre)
+                    .AsNoTracking()
+                    .Select(e => new
+                    {
+                        e.Id,
+                        e.Edo,
+                        e.Nombre,
+                        e.Abreviacion
+                    })
+                    .ToListAsync();
+
+                respuesta.Status = true;
+                respuesta.Response = estados;
+                respuesta.Message.Add($"Se encontraron {estados.Count} estado(s).");
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al obtener los estados: {ex.Message}");
+                return StatusCode(500, respuesta);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene la lista de municipios de un estado
+        /// </summary>
+        [HttpGet("CodigoPostal/Municipios/{codigoEstado}")]
+        [EndpointSummary("Obtiene la lista de municipios de un estado por su código")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ObtenerMunicipiosPorEstado(string codigoEstado)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            try
+            {
+                var municipios = await context.Municipios
+                    .Where(m => m.EDO == codigoEstado)
+                    .OrderBy(m => m.NOMBRE)
+                    .AsNoTracking()
+                    .Select(m => new
+                    {
+                        m.Id,
+                        m.MUNDEL,
+                        m.NOMBRE,
+                        m.EDO
+                    })
+                    .ToListAsync();
+
+                if (!municipios.Any())
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add($"No se encontraron municipios para el estado {codigoEstado}.");
+                    return NotFound(respuesta);
+                }
+
+                respuesta.Status = true;
+                respuesta.Response = municipios;
+                respuesta.Message.Add($"Se encontraron {municipios.Count} municipio(s).");
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al obtener los municipios: {ex.Message}");
+                return StatusCode(500, respuesta);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las colonias de un código postal específico
+        /// </summary>
+        [HttpGet("CodigoPostal/Colonias/{cp}")]
+        [EndpointSummary("Obtiene las colonias de un código postal")]
+        public async Task<ActionResult<RespuestaObjetoDTO>> ObtenerColoniasPorCP(string cp)
+        {
+            var respuesta = new RespuestaObjetoDTO { Message = [] };
+
+            try
+            {
+                var cpLimpio = cp.Trim();
+                if (cpLimpio.Length != 5 || !int.TryParse(cpLimpio, out _))
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add("El código postal debe tener 5 dígitos.");
+                    return BadRequest(respuesta);
+                }
+
+                var colonias = await context.Colonias
+                    .Where(c => c.CodigoP == cpLimpio)
+                    .OrderBy(c => c.Nombre)
+                    .AsNoTracking()
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.CodCol,
+                        c.Nombre,
+                        c.CodigoP
+                    })
+                    .ToListAsync();
+
+                if (!colonias.Any())
+                {
+                    respuesta.Status = false;
+                    respuesta.Message.Add($"No se encontraron colonias para el código postal {cpLimpio}.");
+                    return NotFound(respuesta);
+                }
+
+                respuesta.Status = true;
+                respuesta.Response = colonias;
+                respuesta.Message.Add($"Se encontraron {colonias.Count} colonia(s).");
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                respuesta.Status = false;
+                respuesta.Message.Add($"Error al obtener las colonias: {ex.Message}");
+                return StatusCode(500, respuesta);
+            }
+        }
+
     }
 }
