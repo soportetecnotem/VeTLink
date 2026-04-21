@@ -7,11 +7,13 @@ using VeTLink.Data;
 using VeTLink.DTOs.Llave;
 using VeTLink.Models;
 using VeTLink.Services;
+using VeTLink.Utilidades;
 
 namespace VeTLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [DeshabilitarLimitarPeticiones]
     public class LlavesAPIController(ApplicationDbContext context,
         IMapper mapper, IServicioLlaves servicioLlaves) : ControllerBase
     {

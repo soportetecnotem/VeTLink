@@ -124,7 +124,7 @@ namespace VeTLink.Utilidades
             CreateMap<EstadoSuscripcion, CatalogoDTO>().ReverseMap();
             CreateMap<EstadoSuscripcion, DetalleCatalogoDTO>().ReverseMap();
 
-            // NUEVOS MAPEOS - Enfermedad y Alergia
+            // Enfermedad y Alergia
             CreateMap<Enfermedad, CatalogoDTO>()
                 .ForMember(dto => dto.Descripcion, config => config.MapFrom(ent => ent.Nombre))
                 .ReverseMap();

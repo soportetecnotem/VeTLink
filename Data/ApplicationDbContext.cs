@@ -61,6 +61,7 @@ namespace VeTLink.Data
         public DbSet<Veterinario> Veterinarios { get; set; }
         public DbSet<ViaAdministracion> ViasAdministracion { get; set; }
         public DbSet<LlaveAPI> LlavesAPI { get; set; }
+        public DbSet< Peticion> Peticiones { get; set; }
         public DbSet<CPColonias> Colonias { get; set; }
         public DbSet<CPEdos> Estados { get; set; }
         public DbSet<CPMunDel> Municipios { get; set; }

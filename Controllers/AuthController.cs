@@ -14,11 +14,13 @@ using VeTLink.DTOs.Responses;
 using VeTLink.DTOs.Usuario;
 using VeTLink.Models;
 using VeTLink.Services;
+using VeTLink.Utilidades;
 
 namespace VeTLink.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [DeshabilitarLimitarPeticiones]
     public class AuthController(
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,

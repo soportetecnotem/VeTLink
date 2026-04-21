@@ -8,8 +8,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using VeTLink.Data;
+using VeTLink.DTOs.Llave;
 using VeTLink.Models;
 using VeTLink.Services;
+using VeTLink.Utilidades;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -125,6 +127,11 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
 
+builder.Services.AddOptions<LimitarPeticionesDTO>()
+    .Bind(builder.Configuration.GetSection(LimitarPeticionesDTO.Seccion))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 var app = builder.Build();
 
 //APLICAR MIGRACIONES AUTOMÁTICAMENTE EN PRODUCCIÓN
@@ -149,6 +156,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors();
+
+app.UseLimitarPeticiones(); //middleware personalizado para limitar peticiones por día a usuarios gratuitos
 
 app.UseAuthentication();
 app.UseAuthorization();
